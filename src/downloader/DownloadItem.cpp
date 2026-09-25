@@ -1,9 +1,10 @@
 #include "DownloadItem.h"
 
-DownloadItem::DownloadItem(const QUrl& videoUrl, const QString& outputPath, QObject* parent)
+DownloadItem::DownloadItem(const QUrl& videoUrl, const QString& outputPath, DownloadFormat format, QObject* parent)
     : QObject(parent)
     , m_videoUrl(videoUrl)
     , m_outputPath(outputPath)
+    , m_format(format)
     , m_title(videoUrl.toString())
 {
 }

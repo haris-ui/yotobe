@@ -12,13 +12,25 @@ enum class DownloadState {
     Cancelled
 };
 
+enum class DownloadFormat {
+    BestVideoAudio,
+    Video1080p,
+    Video720p,
+    Video480p,
+    AudioOnlyMP3,
+    AudioOnlyM4A
+};
+
 class DownloadItem : public QObject {
     Q_OBJECT
 public:
-    explicit DownloadItem(const QUrl& videoUrl, const QString& outputPath, QObject* parent = nullptr);
+    explicit DownloadItem(const QUrl& videoUrl, const QString& outputPath, DownloadFormat format = DownloadFormat::BestVideoAudio, QObject* parent = nullptr);
 
     QUrl videoUrl() const { return m_videoUrl; }
     QString outputPath() const { return m_outputPath; }
+    DownloadFormat format() const { return m_format; }
+    void setFormat(DownloadFormat f) { m_format = f; }
+
     QString title() const { return m_title; }
     void setTitle(const QString& title) { m_title = title; }
 
@@ -39,6 +51,7 @@ signals:
 private:
     QUrl m_videoUrl;
     QString m_outputPath;
+    DownloadFormat m_format{DownloadFormat::BestVideoAudio};
     QString m_title;
     int m_progress{0};
     QString m_statusText{"Queued"};

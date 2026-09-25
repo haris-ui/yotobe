@@ -6,13 +6,6 @@
 #include <memory>
 #include "DownloadItem.h"
 
-enum class DownloadFormat {
-    BestVideoAudio,
-    Video1080p,
-    Video720p,
-    AudioOnlyMP3
-};
-
 class VideoDownloader : public QObject {
     Q_OBJECT
 public:
@@ -20,7 +13,9 @@ public:
     ~VideoDownloader();
 
     static QString findYtDlpBinary();
+    static QString findFfmpegBinary();
     static bool isBackendAvailable();
+    static bool isFfmpegAvailable();
 
     DownloadItem* startDownload(const QUrl& url, const QString& destinationFolder, DownloadFormat format = DownloadFormat::BestVideoAudio);
     void cancelCurrentDownload();
@@ -39,11 +34,13 @@ private slots:
     void processNextInQueue();
 
 private:
-    QString buildFormatArgs(DownloadFormat format) const;
+    QString buildFormatString(DownloadFormat format, bool hasFfmpeg) const;
 
     QList<DownloadItem*> m_items;
     QQueue<DownloadItem*> m_queue;
     QProcess* m_currentProcess{nullptr};
     DownloadItem* m_currentItem{nullptr};
     QString m_ytDlpPath;
+    QString m_ffmpegPath;
+    QString m_lastErrorOutput;
 };
