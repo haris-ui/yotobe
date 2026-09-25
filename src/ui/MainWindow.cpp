@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_sharedProfile->setCachePath(appDataDir + "/profile/cache");
     m_sharedProfile->setHttpAcceptLanguage("en-US,en;q=0.9");
     m_sharedProfile->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    m_sharedProfile->setHttpCacheMaximumSize(50 * 1024 * 1024); // Hard cap: 50 MB HTTP cache
     m_sharedProfile->setUrlRequestInterceptor(m_filterManager->interceptor());
 
     m_cosmeticManager = std::make_unique<CosmeticFilterManager>(m_sharedProfile, this);
@@ -156,7 +157,13 @@ BrowserView* MainWindow::createBrowserTab(const QUrl& url, bool setAsCurrent)
     });
 
     if (url.isValid() && !url.isEmpty()) {
-        nav->load(url);
+        if (setAsCurrent) {
+            // Active tab: load immediately
+            nav->load(url);
+        } else {
+            // Background tab: defer load until tab is first activated (lazy loading)
+            view->setProperty("pendingUrl", url);
+        }
     }
 
     return view;
@@ -224,6 +231,23 @@ void MainWindow::handleTabChanged(int index)
         NavigationManager* nav = currentNavManager();
         if (view && nav) {
             connectTabSignals(view, nav);
+
+            // Lazy tab loading: if this tab has a deferred URL, load it now
+            QVariant pending = view->property("pendingUrl");
+            if (pending.isValid() && !pending.isNull()) {
+                nav->load(pending.toUrl());
+                view->setProperty("pendingUrl", QVariant()); // clear so we don't reload again
+            }
+        }
+
+        // Mute all background tabs to reduce audio thread overhead,
+        // then unmute the newly active tab.
+        for (int i = 0; i < m_stackedWidget->count(); ++i) {
+            if (auto* bv = qobject_cast<BrowserView*>(m_stackedWidget->widget(i))) {
+                if (bv->page()) {
+                    bv->page()->setAudioMuted(i != index);
+                }
+            }
         }
     }
 }

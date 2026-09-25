@@ -7,19 +7,31 @@
 int main(int argc, char* argv[]) {
     std::cout << "[INFO] Starting Yotobe Desktop..." << std::endl;
 
-    // 1. Chromium flags: optimal rendering + English language + full Google auth stealth
-    //    Key additions:
-    //    - AcceptCHFrame: disables the server-driven Client Hints mechanism entirely
-    //    - PrivacySandboxSettings4: disables Topics/Privacy Sandbox fingerprinting APIs
-    //    - AutomationControlled + HeadlessMode: prevents embedded-WebView detection flags
-    // 1. Chromium flags: optimal rendering + hardware decode + smooth scrolling + stealth
+    // 1. Chromium flags:
+    //    Rendering & decode — GPU rasterization, zero-copy, accelerated video
+    //    Memory limits     — cap renderer processes, disk cache, media cache
+    //    Process model     — process-per-site groups sites into fewer renderer processes
+    //    Background work   — disable DNS pre-fetch, component updates, background networking
+    //    Stealth           — hide automation flags, disable fingerprinting APIs
     qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
+            // --- Rendering quality ---
             "--enable-gpu-rasterization "
             "--enable-zero-copy "
             "--ignore-gpu-blocklist "
             "--enable-smooth-scrolling "
             "--enable-accelerated-video-decode "
             "--num-raster-threads=4 "
+            // --- Memory / process limits (biggest RAM reduction) ---
+            "--renderer-process-limit=2 "
+            "--process-per-site "
+            "--disk-cache-size=52428800 "
+            "--media-cache-size=52428800 "
+            "--max-unused-resource-memory-usage-percentage=5 "
+            // --- Disable background resource usage ---
+            "--disable-background-networking "
+            "--disable-component-update "
+            "--disable-default-apps "
+            // --- Stealth ---
             "--disable-blink-features=AutomationControlled "
             "--disable-features=UserAgentClientHint,AcceptCHFrame,PrivacySandboxSettings4 "
             "--lang=en-US "
