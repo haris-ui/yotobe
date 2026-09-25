@@ -1,0 +1,56 @@
+! -------------------------------------------------------------
+! Yotobe Curated YouTube Filter List
+! Format: Adblock Plus / uBlock Origin Compatible Rules
+! -------------------------------------------------------------
+
+! Google Ad Services & Doubleclick
+||googleads.g.doubleclick.net^
+||pubads.g.doubleclick.net^
+||securepubads.g.doubleclick.net^
+||static.doubleclick.net^
+||pagead2.googlesyndication.net^
+||adservice.google.com^
+||www.google-analytics.com^
+||stats.g.doubleclick.net^
+
+! YouTube Ad URLs & Beacons
+||youtube.com/api/stats/ads^
+||youtube.com/api/stats/qoe?adformat=^
+||youtube.com/api/stats/watchtime?*&ad=^
+||youtube.com/pagead/*^
+||youtube.com/ptracking^
+||youtube.com/get_midroll_info^
+||youtube.com/api/stats/playback?*&adformat=^
+||s.youtube.com/api/stats/ads^
+||video-stats.l.google.com^
+! YouTube Ad Video Stream Indicators
+||googlevideo.com/videoplayback?*&oad=^
+||googlevideo.com/videoplayback?*&ctier=L^
+
+! Third party ad and tracker networks
+||ad.doubleclick.net^
+||adsystem.com^
+||adnxs.com^
+||criteo.com^
+||scorecardresearch.com^
+
+! YouTube Brand & Promo Banners
+||youtube.com/generate_204^$ping
+||youtube.com/youtubei/v1/log_event^$xhr
+
+! Exceptions (Ensure core functionality never breaks)
+@@||youtube.com/videoplayback
+@@||googlevideo.com/videoplayback
+@@||youtube.com/s/desktop/
+@@||youtube.com/youtubei/v1/player
+@@||youtube.com/youtubei/v1/next
+@@||youtube.com/youtubei/v1/browse
+@@||youtube.com/youtubei/v1/search
+@@||accounts.google.com^
+@@||apis.google.com^
+@@||fonts.googleapis.com^
+@@||fonts.gstatic.com^
+@@||consent.google.com^
+@@||ssl.gstatic.com^
+@@||play.google.com^
+@@||accounts.youtube.com^

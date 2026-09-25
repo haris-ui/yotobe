@@ -1,0 +1,53 @@
+# Prerequisites / Build Directories
+build/
+build*/
+dist/
+bin/
+lib/
+out/
+
+# Visual Studio / MSVC
+.vs/
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.ide
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.res
+
+# Qt / MOC / RCC / UIC artifacts
+*.qrc.depends
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.moc
+Makefile*
+
+# Executables & Packages
+*.exe
+*.dll
+*.msi
+*.zip
+*.7z
+
+# yt-dlp local binary (downloaded per-user)
+yt-dlp.exe
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
