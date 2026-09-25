@@ -83,6 +83,10 @@ target_link_libraries(Yotobe PRIVATE
     Qt6::Network
 )
 
+if(WIN32)
+    target_link_libraries(Yotobe PRIVATE dwmapi)
+endif()
+
 if(MSVC)
     target_compile_options(Yotobe PRIVATE /W4 /permissive- /Zc:__cplusplus /utf-8)
 else()

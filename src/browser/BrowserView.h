@@ -9,7 +9,7 @@
 class BrowserView : public QWebEngineView {
     Q_OBJECT
 public:
-    explicit BrowserView(QWidget* parent = nullptr);
+    explicit BrowserView(QWebEngineProfile* profile = nullptr, QWidget* parent = nullptr);
 
     void setProfileStoragePath(const QString& storagePath);
     void applyCustomUserAgent();

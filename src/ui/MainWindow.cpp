@@ -10,6 +10,11 @@
 #include "DownloadDialog.h"
 #include "SplashScreen.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <dwmapi.h>
+#endif
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QToolButton>
@@ -21,6 +26,8 @@
 #include <QKeySequence>
 #include <QKeyEvent>
 #include <QResizeEvent>
+#include <QShowEvent>
+#include <QCloseEvent>
 #include <QStandardPaths>
 #include <QDir>
 #include <QApplication>
@@ -49,12 +56,28 @@ MainWindow::MainWindow(QWidget* parent)
     m_filterManager->initialize();
     m_filterManager->setFilteringEnabled(m_settingsManager->isFilteringEnabled());
 
-    // 2. Build UI layout and shortcuts
+    // 2. Initialize persistent profile with on-disk storage for cookies, sessions & cache
+    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(appDataDir + "/profile");
+
+    m_sharedProfile = new QWebEngineProfile(QStringLiteral("YotobeProfile"), this);
+    m_sharedProfile->setPersistentCookiesPolicy(QWebEngineProfile::ForcePersistentCookies);
+    m_sharedProfile->setPersistentStoragePath(appDataDir + "/profile");
+    m_sharedProfile->setCachePath(appDataDir + "/profile/cache");
+    m_sharedProfile->setHttpAcceptLanguage("en-US,en;q=0.9");
+    m_sharedProfile->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    m_sharedProfile->setUrlRequestInterceptor(m_filterManager->interceptor());
+
+    m_cosmeticManager = std::make_unique<CosmeticFilterManager>(m_sharedProfile, this);
+    m_cosmeticManager->setCosmeticFilteringEnabled(
+        m_settingsManager->isCosmeticFilteringEnabled());
+
+    // 3. Build UI layout and shortcuts
     setupUi();
     setupShortcuts();
     applyTheme();
 
-    // 3. Connect filter & settings signals
+    // 4. Connect filter & settings signals
     if (m_filterManager->statistics()) {
         connect(m_filterManager->statistics().get(), &FilterStatistics::statsChanged,
                 this, &MainWindow::updateFilterPill);
@@ -71,14 +94,14 @@ MainWindow::MainWindow(QWidget* parent)
                 if (m_cosmeticManager) m_cosmeticManager->setCosmeticFilteringEnabled(enabled);
             });
 
-    // 4. Create primary startup tab (loads YouTube)
+    // 5. Create primary startup tab (loads YouTube using the shared persistent profile)
     BrowserView* firstView = createBrowserTab(UrlPolicy::defaultUrl(), true);
 
-    // 5. Connect initial load finish to splash screen
+    // 6. Connect initial load finish to splash screen
     connect(firstView, &QWebEngineView::loadFinished,
             this, &MainWindow::handleInitialLoadFinished);
 
-    // 6. Splash screen overlay
+    // 7. Splash screen overlay
     m_splashScreen = new SplashScreen(this);
     m_splashScreen->setGeometry(rect());
     m_splashScreen->show();
@@ -100,24 +123,8 @@ MainWindow::~MainWindow() = default;
 
 BrowserView* MainWindow::createBrowserTab(const QUrl& url, bool setAsCurrent)
 {
-    auto* view = new BrowserView(this);
-
-    // First tab initializes the shared persistent profile & cosmetic script
-    if (!m_sharedProfile) {
-        QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        QDir().mkpath(appDataDir);
-
-        view->setProfileStoragePath(appDataDir + "/profile");
-        view->applyCustomUserAgent();
-        view->page()->profile()->setHttpAcceptLanguage("en-US,en;q=0.9");
-        view->page()->profile()->setUrlRequestInterceptor(m_filterManager->interceptor());
-
-        m_sharedProfile = view->page()->profile();
-
-        m_cosmeticManager = std::make_unique<CosmeticFilterManager>(m_sharedProfile, this);
-        m_cosmeticManager->setCosmeticFilteringEnabled(
-            m_settingsManager->isCosmeticFilteringEnabled());
-    }
+    // Every tab is explicitly bound to the shared persistent profile
+    auto* view = new BrowserView(m_sharedProfile, this);
 
     auto* nav = new NavigationManager(view, this);
     m_navManagers[view] = nav;
@@ -231,6 +238,9 @@ void MainWindow::handleTabCloseRequested(int index)
         m_stackedWidget->removeWidget(view);
         NavigationManager* nav = m_navManagers.take(view);
         delete nav;
+        if (view->page()) {
+            view->page()->setAudioMuted(true);
+        }
         view->stop();
         view->deleteLater();
     }
@@ -239,6 +249,45 @@ void MainWindow::handleTabCloseRequested(int index)
 // ============================================================
 //  Events
 // ============================================================
+
+void MainWindow::showEvent(QShowEvent* event)
+{
+    QMainWindow::showEvent(event);
+#ifdef Q_OS_WIN
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    BOOL darkMode = TRUE;
+    // DWMWA_USE_IMMERSIVE_DARK_MODE (20 for Win11/Win10 build 18985+, 19 for older Win10)
+    DwmSetWindowAttribute(hwnd, 20, &darkMode, sizeof(darkMode));
+    DwmSetWindowAttribute(hwnd, 19, &darkMode, sizeof(darkMode));
+
+    // Dark border on Windows 11 (DWMWA_BORDER_COLOR = 34)
+    COLORREF borderColor = RGB(28, 28, 28);
+    DwmSetWindowAttribute(hwnd, 34, &borderColor, sizeof(borderColor));
+
+    // Dark titlebar caption on Windows 11 (DWMWA_CAPTION_COLOR = 35)
+    COLORREF captionColor = RGB(18, 18, 18);
+    DwmSetWindowAttribute(hwnd, 35, &captionColor, sizeof(captionColor));
+#endif
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    // 1. Immediately mute all audio and pause all videos to eliminate trailing audio lag
+    for (int i = 0; i < m_stackedWidget->count(); ++i) {
+        if (auto* view = qobject_cast<BrowserView*>(m_stackedWidget->widget(i))) {
+            if (view->page()) {
+                view->page()->setAudioMuted(true);
+                view->page()->runJavaScript("const v = document.querySelector('video'); if (v) { v.pause(); v.src = ''; }");
+            }
+            view->stop();
+        }
+    }
+
+    // 2. Hide immediately for snappy UI closing
+    hide();
+
+    event->accept();
+}
 
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
@@ -253,6 +302,9 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Escape && isFullScreen()) {
         handleFullScreenToggled(false);
+        if (auto* view = currentBrowserView()) {
+            view->triggerPageAction(QWebEnginePage::ExitFullScreen);
+        }
         event->accept();
         return;
     }
@@ -543,10 +595,21 @@ void MainWindow::setupShortcuts()
         if (auto* n = currentNavManager()) n->reload();
     });
 
-    // F11 — Fullscreen toggle
-    auto* f11 = new QShortcut(QKeySequence(Qt::Key_F11), this);
+    // F11 — Fullscreen toggle (Application-level shortcut)
+    auto* f11 = new QShortcut(QKeySequence(Qt::Key_F11), this, nullptr, nullptr, Qt::ApplicationShortcut);
     connect(f11, &QShortcut::activated, [this]() {
         handleFullScreenToggled(!isFullScreen());
+    });
+
+    // Escape key — Global Application Shortcut to exit fullscreen from anywhere (even when webview/video has focus)
+    auto* escShortcut = new QShortcut(QKeySequence(Qt::Key_Escape), this, nullptr, nullptr, Qt::ApplicationShortcut);
+    connect(escShortcut, &QShortcut::activated, this, [this]() {
+        if (isFullScreen()) {
+            handleFullScreenToggled(false);
+            if (auto* view = currentBrowserView()) {
+                view->triggerPageAction(QWebEnginePage::ExitFullScreen);
+            }
+        }
     });
 }
 
@@ -591,18 +654,22 @@ void MainWindow::handleLoadingProgress(int progress)
 void MainWindow::handleFullScreenToggled(bool fullScreen)
 {
     if (fullScreen) {
-        m_wasMaximizedBeforeFullscreen = isMaximized();
-        m_tabBarContainer->hide();
-        m_topBar->hide();
-        m_loadingBar->hide();
-        showFullScreen();
+        if (!isFullScreen()) {
+            m_wasMaximizedBeforeFullscreen = isMaximized();
+            m_tabBarContainer->hide();
+            m_topBar->hide();
+            m_loadingBar->hide();
+            showFullScreen();
+        }
     } else {
-        m_tabBarContainer->show();
-        m_topBar->show();
-        if (m_wasMaximizedBeforeFullscreen) {
-            showMaximized();
-        } else {
-            showNormal();
+        if (isFullScreen()) {
+            m_tabBarContainer->show();
+            m_topBar->show();
+            if (m_wasMaximizedBeforeFullscreen) {
+                showMaximized();
+            } else {
+                showNormal();
+            }
         }
     }
 }

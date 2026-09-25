@@ -35,6 +35,7 @@ Makefile*
 *.msi
 *.zip
 *.7z
+aqtinstall.log
 
 # yt-dlp local binary (downloaded per-user)
 yt-dlp.exe

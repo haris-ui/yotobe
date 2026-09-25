@@ -12,10 +12,14 @@ int main(int argc, char* argv[]) {
     //    - AcceptCHFrame: disables the server-driven Client Hints mechanism entirely
     //    - PrivacySandboxSettings4: disables Topics/Privacy Sandbox fingerprinting APIs
     //    - AutomationControlled + HeadlessMode: prevents embedded-WebView detection flags
+    // 1. Chromium flags: optimal rendering + hardware decode + smooth scrolling + stealth
     qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
             "--enable-gpu-rasterization "
             "--enable-zero-copy "
             "--ignore-gpu-blocklist "
+            "--enable-smooth-scrolling "
+            "--enable-accelerated-video-decode "
+            "--num-raster-threads=4 "
             "--disable-blink-features=AutomationControlled "
             "--disable-features=UserAgentClientHint,AcceptCHFrame,PrivacySandboxSettings4 "
             "--lang=en-US "

@@ -32,6 +32,8 @@ public:
 protected:
     void keyPressEvent(QKeyEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    void showEvent(QShowEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private slots:
     // Toolbar / page slots (wired to the active tab only)

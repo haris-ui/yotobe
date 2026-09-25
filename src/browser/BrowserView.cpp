@@ -5,9 +5,12 @@
 #include <QWebEngineScriptCollection>
 #include <QDesktopServices>
 
-BrowserView::BrowserView(QWidget* parent)
+BrowserView::BrowserView(QWebEngineProfile* profile, QWidget* parent)
     : QWebEngineView(parent)
 {
+    if (profile) {
+        setPage(new QWebEnginePage(profile, this));
+    }
     // Enable features required by modern YouTube (HTML5 video, Fullscreen, WebGL, LocalStorage)
     settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
     settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
