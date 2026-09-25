@@ -43,9 +43,22 @@ bool UrlPolicy::isAuthDomain(const QUrl& url) const {
     return host == "accounts.google.com" ||
            host.endsWith(".accounts.google.com") ||
            host == "myaccount.google.com" ||
+           host.endsWith(".myaccount.google.com") ||
            host == "consent.google.com" ||
+           host.endsWith(".consent.google.com") ||
            host == "accounts.youtube.com" ||
-           host == "apis.google.com";
+           host.endsWith(".accounts.youtube.com") ||
+           host == "apis.google.com" ||
+           host.endsWith(".apis.google.com") ||
+           host == "googleapis.com" ||
+           host.endsWith(".googleapis.com") ||
+           host == "gstatic.com" ||
+           host.endsWith(".gstatic.com") ||
+           host == "google.com" ||
+           host.endsWith(".google.com") ||
+           host == "googleusercontent.com" ||
+           host.endsWith(".googleusercontent.com") ||
+           host == "play.google.com";
 }
 
 bool UrlPolicy::isAllowedNavigation(const QUrl& url) const {
