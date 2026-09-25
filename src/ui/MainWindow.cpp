@@ -733,7 +733,7 @@ void MainWindow::openSettingsDialog()
 void MainWindow::openDownloadDialog()
 {
     QUrl currentUrl = currentBrowserView() ? currentBrowserView()->url() : QUrl();
-    DownloadDialog dialog(m_videoDownloader.get(), currentUrl, this);
+    DownloadDialog dialog(m_videoDownloader.get(), currentUrl, m_settingsManager.get(), this);
     dialog.exec();
 }
 

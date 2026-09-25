@@ -35,5 +35,12 @@ signals:
     void cosmeticFilteringSettingChanged(bool enabled);
 
 private:
+    // Centralised key constants — a typo here is a compile error, not a silent registry split.
+    static constexpr QLatin1StringView kKeyNetworkFilter  {"filtering/network_enabled"};
+    static constexpr QLatin1StringView kKeyCosmeticFilter {"filtering/cosmetic_enabled"};
+    static constexpr QLatin1StringView kKeyTheme          {"ui/theme"};
+    static constexpr QLatin1StringView kKeyHwAccel        {"performance/hardware_accel"};
+    static constexpr QLatin1StringView kKeyDownloadPath   {"downloads/path"};
+
     QSettings m_settings;
 };

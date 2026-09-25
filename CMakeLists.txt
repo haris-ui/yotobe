@@ -17,15 +17,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Network
 )
 
-include_directories(
-    src
-    src/browser
-    src/filtering
-    src/cosmetic
-    src/downloader
-    src/settings
-    src/ui
-)
 
 set(SOURCES
     src/main.cpp
@@ -73,6 +64,17 @@ if(WIN32)
 else()
     add_executable(Yotobe ${SOURCES} ${HEADERS})
 endif()
+
+# Scoped include paths — PRIVATE means they don't leak to consumers of this target
+target_include_directories(Yotobe PRIVATE
+    src
+    src/browser
+    src/filtering
+    src/cosmetic
+    src/downloader
+    src/settings
+    src/ui
+)
 
 target_link_libraries(Yotobe PRIVATE
     Qt6::Core

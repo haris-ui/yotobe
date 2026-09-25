@@ -109,12 +109,6 @@ BrowserView::BrowserView(QWebEngineProfile* profile, QWidget* parent)
     });
 }
 
-void BrowserView::setProfileStoragePath(const QString& storagePath) {
-    QWebEngineProfile* prof = page()->profile();
-    prof->setPersistentStoragePath(storagePath);
-    prof->setPersistentCookiesPolicy(QWebEngineProfile::ForcePersistentCookies);
-    prof->setCachePath(storagePath + "/cache");
-}
 
 void BrowserView::applyCustomUserAgent() {
     // Standard modern Chrome desktop User Agent matching Qt 6.8 Chromium 128 core

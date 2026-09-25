@@ -4,6 +4,7 @@
 #include <QUrl>
 
 class VideoDownloader;
+class SettingsManager;
 class QLineEdit;
 class QComboBox;
 class QProgressBar;
@@ -14,7 +15,10 @@ class QListWidget;
 class DownloadDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit DownloadDialog(VideoDownloader* downloader, const QUrl& currentVideoUrl, QWidget* parent = nullptr);
+    explicit DownloadDialog(VideoDownloader* downloader,
+                            const QUrl& currentVideoUrl,
+                            SettingsManager* settings = nullptr,
+                            QWidget* parent = nullptr);
 
 private slots:
     void browseDestination();
@@ -30,6 +34,7 @@ private:
     bool isDirectVideoUrl(const QString& urlStr) const;
 
     VideoDownloader* m_downloader{nullptr};
+    SettingsManager* m_settings{nullptr};
     QUrl m_videoUrl;
 
     QLineEdit*    m_urlEdit{nullptr};

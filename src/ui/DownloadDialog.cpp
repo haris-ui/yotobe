@@ -1,5 +1,6 @@
 #include "DownloadDialog.h"
 #include "VideoDownloader.h"
+#include "SettingsManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -16,9 +17,13 @@
 #include <QDesktopServices>
 #include <QFileInfo>
 
-DownloadDialog::DownloadDialog(VideoDownloader* downloader, const QUrl& currentVideoUrl, QWidget* parent)
+DownloadDialog::DownloadDialog(VideoDownloader* downloader,
+                               const QUrl& currentVideoUrl,
+                               SettingsManager* settings,
+                               QWidget* parent)
     : QDialog(parent)
     , m_downloader(downloader)
+    , m_settings(settings)
     , m_videoUrl(currentVideoUrl)
 {
     setWindowTitle("Yotobe - Video Downloader");
@@ -115,11 +120,13 @@ void DownloadDialog::setupUi() {
     formatLayout->addWidget(m_formatCombo, 1);
     mainLayout->addLayout(formatLayout);
 
-    // Save location
+    // Save location — prefer user's configured path, fall back to Movies folder
     auto* destLayout = new QHBoxLayout();
     destLayout->setSpacing(6);
     destLayout->addWidget(new QLabel("Save To:", this));
-    QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
+    QString defaultPath = m_settings
+        ? m_settings->defaultDownloadPath()
+        : QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
     m_destinationEdit = new QLineEdit(defaultPath, this);
     destLayout->addWidget(m_destinationEdit, 1);
 

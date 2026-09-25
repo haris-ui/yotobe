@@ -11,7 +11,6 @@ class BrowserView : public QWebEngineView {
 public:
     explicit BrowserView(QWebEngineProfile* profile = nullptr, QWidget* parent = nullptr);
 
-    void setProfileStoragePath(const QString& storagePath);
     void applyCustomUserAgent();
 
     UrlPolicy& urlPolicy() { return m_urlPolicy; }
