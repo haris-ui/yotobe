@@ -284,12 +284,12 @@ void MainWindow::showEvent(QShowEvent* event)
     DwmSetWindowAttribute(hwnd, 20, &darkMode, sizeof(darkMode));
     DwmSetWindowAttribute(hwnd, 19, &darkMode, sizeof(darkMode));
 
-    // Dark border on Windows 11 (DWMWA_BORDER_COLOR = 34)
-    COLORREF borderColor = RGB(28, 28, 28);
+    // Dark border on Windows 11 matching Framer hairline #262626 (DWMWA_BORDER_COLOR = 34)
+    COLORREF borderColor = RGB(38, 38, 38);
     DwmSetWindowAttribute(hwnd, 34, &borderColor, sizeof(borderColor));
 
-    // Dark titlebar caption on Windows 11 (DWMWA_CAPTION_COLOR = 35)
-    COLORREF captionColor = RGB(18, 18, 18);
+    // Dark titlebar caption matching Framer canvas #090909 (DWMWA_CAPTION_COLOR = 35)
+    COLORREF captionColor = RGB(9, 9, 9);
     DwmSetWindowAttribute(hwnd, 35, &captionColor, sizeof(captionColor));
 #endif
 }
@@ -427,8 +427,7 @@ void MainWindow::setupUi()
     brandLayout->addWidget(m_brandLogo);
 
     m_brandText = new QLabel(
-        "<span style='font-size:15px;font-weight:800;color:#ffffff;'>Yotobe</span>"
-        "<span style='color:#ff0000;font-size:15px;font-weight:800;'>.</span>",
+        "<span style='font-size:15px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;'>Yotobe</span>",
         m_topBar);
     brandLayout->addWidget(m_brandText);
     topLayout->addLayout(brandLayout);
@@ -503,8 +502,8 @@ void MainWindow::setupUi()
 
     m_downloadBtn = new QPushButton("Download", m_topBar);
     m_downloadBtn->setObjectName("downloadBtn");
-    m_downloadBtn->setIcon(QIcon(":/icons/download.svg"));
-    m_downloadBtn->setIconSize(QSize(15, 15));
+    m_downloadBtn->setIcon(QIcon(":/icons/download_dark.svg"));
+    m_downloadBtn->setIconSize(QSize(14, 14));
     m_downloadBtn->setToolTip("Download current video (yt-dlp)");
     m_downloadBtn->setFixedHeight(32);
     connect(m_downloadBtn, &QPushButton::clicked, this, &MainWindow::openDownloadDialog);
@@ -529,7 +528,7 @@ void MainWindow::setupUi()
     centralLayout->addWidget(m_topBar);
 
     // ============================================================
-    // Row 3: Loading Progress Bar
+    // Row 3: Loading Progress Bar (Framer Accent Violet / Blue)
     // ============================================================
     m_loadingBar = new QProgressBar(this);
     m_loadingBar->setFixedHeight(2);
@@ -538,7 +537,7 @@ void MainWindow::setupUi()
     m_loadingBar->setValue(0);
     m_loadingBar->setStyleSheet(
         "QProgressBar { border:none; background:transparent; }"
-        "QProgressBar::chunk { background-color:#ff0000; }");
+        "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0099ff, stop:1 #6a4cf5); }");
     centralLayout->addWidget(m_loadingBar);
 
     // ============================================================
@@ -705,18 +704,18 @@ void MainWindow::updateFilterPill()
     if (!m_filterManager->isFilteringEnabled()) {
         m_shieldBtn->setText("Filter: Off");
         m_shieldBtn->setStyleSheet(
-            "QToolButton#shieldBtn { background-color:#272727; color:#888888; border:1px solid #383838;"
-            " border-radius:16px; padding:3px 12px; font-weight:600; font-size:12px; }"
-            "QToolButton#shieldBtn:hover { background-color:#333333; }");
+            "QToolButton#shieldBtn { background-color:#141414; color:#888888; border:1px solid #262626;"
+            " border-radius:16px; padding:3px 12px; font-weight:500; font-size:12px; }"
+            "QToolButton#shieldBtn:hover { background-color:#1c1c1c; color:#cccccc; border-color:#333333; }");
         return;
     }
 
     qint64 blocked = m_filterManager->statistics()->blockedRequests();
     m_shieldBtn->setText(QString("%1 Blocked").arg(blocked));
     m_shieldBtn->setStyleSheet(
-        "QToolButton#shieldBtn { background-color:#122818; color:#4ade80; border:1px solid #1c5427;"
-        " border-radius:16px; padding:3px 12px; font-weight:700; font-size:12px; }"
-        "QToolButton#shieldBtn:hover { background-color:#163620; border-color:#267335; }");
+        "QToolButton#shieldBtn { background-color:#0f2015; color:#22c55e; border:1px solid #193d25;"
+        " border-radius:16px; padding:3px 12px; font-weight:600; font-size:12px; }"
+        "QToolButton#shieldBtn:hover { background-color:#142b1c; border-color:#225232; }");
 }
 
 // ============================================================
@@ -741,48 +740,65 @@ void MainWindow::openAboutDialog()
 {
     QDialog dialog(this);
     dialog.setWindowTitle("About Yotobe");
-    dialog.setFixedSize(460, 340);
-    dialog.setStyleSheet("background-color:#141414; color:#f1f1f1;");
+    dialog.setFixedSize(480, 360);
+    dialog.setStyleSheet(
+        "QDialog { background-color:#090909; color:#ffffff; font-family:'Segoe UI Variable Text','Segoe UI',sans-serif; }"
+        "QLabel { border: none; background: transparent; }"
+    );
 
     auto* layout = new QVBoxLayout(&dialog);
-    layout->setContentsMargins(28, 28, 28, 24);
-    layout->setSpacing(10);
+    layout->setContentsMargins(32, 32, 32, 28);
+    layout->setSpacing(12);
 
     auto* logoLabel = new QLabel(&dialog);
     QPixmap raw(":/icons/app_icon.png");
     if (!raw.isNull()) {
-        logoLabel->setPixmap(raw.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        QPixmap scaled = raw.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QPixmap rounded(80, 80);
+        rounded.fill(Qt::transparent);
+        QPainter p(&rounded);
+        p.setRenderHint(QPainter::Antialiasing);
+        QPainterPath path;
+        path.addRoundedRect(0, 0, 80, 80, 18, 18);
+        p.setClipPath(path);
+        p.drawPixmap(0, 0, scaled);
+        p.end();
+        logoLabel->setPixmap(rounded);
     }
     logoLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(logoLabel);
 
     auto* titleLabel = new QLabel(
-        "<span style='font-size:22px;font-weight:800;color:#ffffff;'>Yotobe</span> "
-        "<span style='font-size:13px;color:#ff4444;'>v1.0.0</span>",
+        "<span style='font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.8px;'>Yotobe</span> "
+        "<span style='background-color:#1c1c1c;color:#0099ff;border:1px solid #262626;border-radius:100px;padding:2px 8px;font-size:11px;font-weight:600;'>v1.0.0</span>",
         &dialog);
     titleLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(titleLabel);
 
-    auto* authorLabel = new QLabel("Made by Muhammad Haris Zubair", &dialog);
-    authorLabel->setStyleSheet("color:#e2b714; font-size:14px; font-weight:700; letter-spacing:0.5px;");
+    auto* authorLabel = new QLabel(
+        "<span style='background-color:#141414;color:#888888;border:1px solid #222222;border-radius:100px;padding:4px 14px;font-size:11px;font-weight:500;'>"
+        "Engineered by <strong style='color:#ffffff;font-weight:600;'>Muhammad Haris Zubair</strong></span>",
+        &dialog);
     authorLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(authorLabel);
 
     auto* descLabel = new QLabel(
-        "High-performance desktop client for YouTube with native network ad-filtering, "
-        "multi-tab browsing, cosmetic cleaning, and integrated video downloader.",
+        "A focused, high-performance YouTube desktop experience engineered with "
+        "native network filtering, seamless tab management, and high-efficiency media extraction.",
         &dialog);
     descLabel->setWordWrap(true);
-    descLabel->setStyleSheet("color:#999999; font-size:12px;");
+    descLabel->setStyleSheet("color:#999999; font-size:13px; line-height: 1.4; margin-top: 4px;");
     descLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(descLabel);
 
     layout->addStretch();
 
     auto* okBtn = new QPushButton("Close", &dialog);
+    okBtn->setFixedSize(120, 34);
     okBtn->setStyleSheet(
-        "background-color:#272727; color:#f1f1f1; border:1px solid #383838;"
-        " border-radius:6px; padding:6px 20px; font-weight:600;");
+        "QPushButton { background-color:#ffffff; color:#000000; border:none; border-radius:17px; font-weight:600; font-size:13px; }"
+        "QPushButton:hover { background-color:#e6e6e6; }"
+        "QPushButton:pressed { background-color:#cccccc; }");
     connect(okBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
     layout->addWidget(okBtn, 0, Qt::AlignCenter);
 
@@ -798,81 +814,111 @@ void MainWindow::applyTheme()
     AppTheme theme = m_settingsManager->theme();
     if (theme == AppTheme::Dark || theme == AppTheme::System) {
         setStyleSheet(
-            // Window Base
-            "QMainWindow { background-color:#0f0f0f; }"
-            "QWidget#centralWidget { background-color:#0f0f0f; font-family:'Segoe UI Variable Display','Segoe UI',sans-serif; }"
-            "QWidget#contentStack { background-color:#0f0f0f; border:none; }"
+            // Window Base — Framer Canvas #090909
+            "QMainWindow { background-color:#090909; }"
+            "QWidget#centralWidget { background-color:#090909; font-family:'Segoe UI Variable Text','Segoe UI',sans-serif; }"
+            "QWidget#contentStack { background-color:#090909; border:none; }"
 
             // Tab Bar Strip (Row 1)
-            "QWidget#tabBarContainer { background-color:#121212; border-bottom:1px solid #1e1e1e; }"
+            "QWidget#tabBarContainer { background-color:#090909; border-bottom:1px solid #1a1a1a; }"
             "QTabBar#windowTabBar { background:transparent; }"
             "QTabBar#windowTabBar::tab {"
-            " background-color:#181818; color:#888888;"
-            " border:1px solid #242424; border-bottom:none;"
-            " border-top-left-radius:8px; border-top-right-radius:8px;"
-            " padding:5px 28px 5px 12px;"
+            " background-color:transparent; color:#888888;"
+            " border:1px solid transparent; border-bottom:none;"
+            " border-top-left-radius:9px; border-top-right-radius:9px;"
+            " padding:6px 28px 6px 12px;"
             " min-width:110px; max-width:200px; height:20px;"
-            " font-size:12px; font-weight:500; margin-right:3px;"
+            " font-size:12px; font-weight:500; margin-right:2px;"
             "}"
             "QTabBar#windowTabBar::tab:selected {"
-            " background-color:#212121; color:#ffffff;"
-            " border-color:#2e2e2e; border-top:2px solid #ff0000; padding-top:4px;"
+            " background-color:#141414; color:#ffffff;"
+            " border:1px solid #262626; border-bottom:1px solid #141414;"
+            " font-weight:600;"
             "}"
             "QTabBar#windowTabBar::tab:hover:!selected {"
-            " background-color:#1d1d1d; color:#dddddd;"
+            " background-color:#111111; color:#cccccc;"
             "}"
             "QTabBar#windowTabBar::close-button {"
             " image:url(:/icons/close.svg);"
             " subcontrol-origin:padding; subcontrol-position:right;"
-            " width:10px; height:10px; padding:3px; border-radius:8px; margin-right:3px;"
+            " width:12px; height:12px; padding:3px; border-radius:8px; margin-right:4px;"
             "}"
             "QTabBar#windowTabBar::close-button:hover {"
-            " background-color:#383838;"
+            " background-color:#262626;"
             "}"
             "QToolButton#newTabBtn {"
-            " background:transparent; color:#888888; border:none;"
-            " font-size:18px; font-weight:300; border-radius:14px;"
+            " background-color:#141414; color:#888888; border:1px solid #222222;"
+            " border-radius:14px; font-size:15px; font-weight:400;"
             "}"
             "QToolButton#newTabBtn:hover {"
-            " background-color:#2a2a2a; color:#ffffff;"
+            " background-color:#1c1c1c; color:#ffffff; border-color:#333333;"
+            "}"
+            "QToolButton#newTabBtn:pressed {"
+            " background-color:#242424;"
             "}"
 
             // Navigation Toolbar (Row 2)
-            "QWidget#topBar { background-color:#161616; border-bottom:1px solid #222222; }"
+            "QWidget#topBar { background-color:#090909; border-bottom:1px solid #1c1c1c; }"
             "QLineEdit#addressEdit {"
-            " background-color:#1f1f1f; color:#ffffff; border:1px solid #303030;"
-            " border-radius:16px; padding:2px 14px; font-size:13px;"
-            " selection-background-color:#3ea6ff;"
+            " background-color:#141414; color:#ffffff; border:1px solid #262626;"
+            " border-radius:17px; padding:3px 14px; font-size:13px;"
+            " selection-background-color:#0099ff; selection-color:#ffffff;"
             "}"
-            "QLineEdit#addressEdit:focus { border:1px solid #3ea6ff; background-color:#242424; }"
+            "QLineEdit#addressEdit:focus {"
+            " border:1px solid #0099ff; background-color:#181818;"
+            "}"
 
             // Uniform ToolButtons in Toolbar
             "QToolButton {"
-            " background-color:#212121; color:#f1f1f1; border:1px solid #333333;"
+            " background-color:#141414; color:#ffffff; border:1px solid #222222;"
             " border-radius:16px; padding:2px; font-size:12px;"
             "}"
-            "QToolButton:hover { background-color:#333333; border-color:#4a4a4a; }"
-            "QToolButton:pressed { background-color:#3f3f3f; }"
-            "QToolButton:disabled { background-color:#181818; color:#444444; border-color:#242424; }"
+            "QToolButton:hover { background-color:#1c1c1c; border-color:#333333; }"
+            "QToolButton:pressed { background-color:#242424; }"
+            "QToolButton:disabled { background-color:#0d0d0d; color:#444444; border-color:#181818; }"
 
-            // Download Button
+            // Download Button — Framer Primary White Pill
             "QPushButton#downloadBtn {"
-            " background-color:#cc0000; color:#ffffff; border:none;"
-            " border-radius:16px; padding:4px 14px; font-weight:700; font-size:12px;"
+            " background-color:#ffffff; color:#000000; border:none;"
+            " border-radius:16px; padding:4px 16px; font-weight:600; font-size:12px;"
             "}"
-            "QPushButton#downloadBtn:hover { background-color:#e60000; }"
-            "QPushButton#downloadBtn:pressed { background-color:#990000; }"
+            "QPushButton#downloadBtn:hover { background-color:#e6e6e6; }"
+            "QPushButton#downloadBtn:pressed { background-color:#cccccc; }"
 
             // About Button
-            "QToolButton#aboutBtn { padding:3px 12px; }"
+            "QToolButton#aboutBtn {"
+            " background-color:#141414; border:1px solid #262626; border-radius:16px;"
+            " color:#cccccc; padding:3px 14px; font-weight:500;"
+            "}"
+            "QToolButton#aboutBtn:hover { background-color:#1c1c1c; border-color:#383838; color:#ffffff; }"
+
+            // Minimalist Scrollbars
+            "QScrollBar:vertical {"
+            " border:none; background:transparent; width:6px; margin:0;"
+            "}"
+            "QScrollBar::handle:vertical {"
+            " background:#262626; min-height:20px; border-radius:3px;"
+            "}"
+            "QScrollBar::handle:vertical:hover { background:#383838; }"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height:0; background:none; }"
+            "QScrollBar:horizontal {"
+            " border:none; background:transparent; height:6px; margin:0;"
+            "}"
+            "QScrollBar::handle:horizontal {"
+            " background:#262626; min-width:20px; border-radius:3px;"
+            "}"
+            "QScrollBar::handle:horizontal:hover { background:#383838; }"
+            "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width:0; background:none; }"
 
             // Dialog Lists
-            "QListWidget { background-color:#181818; color:#e0e0e0; border:1px solid #2e2e2e; border-radius:6px; padding:4px; }"
+            "QListWidget {"
+            " background-color:#0c0c0c; color:#e0e0e0; border:1px solid #222222; border-radius:10px; padding:6px;"
+            "}"
         );
     } else {
         setStyleSheet(
             "QMainWindow { background-color:#f9f9f9; }"
-            "QWidget#centralWidget { background-color:#f9f9f9; font-family:'Segoe UI Variable Display','Segoe UI',sans-serif; }"
+            "QWidget#centralWidget { background-color:#f9f9f9; font-family:'Segoe UI Variable Text','Segoe UI',sans-serif; }"
             "QWidget#tabBarContainer { background-color:#eaeaea; border-bottom:1px solid #d4d4d4; }"
             "QTabBar#windowTabBar::tab {"
             " background-color:#e0e0e0; color:#555555;"
@@ -882,7 +928,7 @@ void MainWindow::applyTheme()
             "}"
             "QTabBar#windowTabBar::tab:selected {"
             " background-color:#f9f9f9; color:#000000;"
-            " border-top:2px solid #cc0000; padding-top:4px;"
+            " border-top:2px solid #0099ff; padding-top:4px;"
             "}"
             "QTabBar#windowTabBar::close-button {"
             " image:url(:/icons/close.svg);"
@@ -893,11 +939,11 @@ void MainWindow::applyTheme()
             "QToolButton#newTabBtn:hover { background-color:#dcdcdc; color:#000000; }"
             "QWidget#topBar { background-color:#f0f0f0; border-bottom:1px solid #e0e0e0; }"
             "QLineEdit#addressEdit { background-color:#ffffff; color:#000000; border:1px solid #cccccc; border-radius:16px; padding:2px 14px; font-size:13px; }"
-            "QLineEdit#addressEdit:focus { border:1px solid #065fd4; }"
+            "QLineEdit#addressEdit:focus { border:1px solid #0099ff; }"
             "QToolButton { background-color:#f5f5f5; color:#0f0f0f; border:1px solid #d4d4d4; border-radius:16px; padding:2px; }"
             "QToolButton:hover { background-color:#e8e8e8; }"
-            "QPushButton#downloadBtn { background-color:#cc0000; color:#ffffff; border-radius:16px; padding:4px 14px; font-weight:700; font-size:12px; }"
-            "QPushButton#downloadBtn:hover { background-color:#e60000; }"
+            "QPushButton#downloadBtn { background-color:#090909; color:#ffffff; border-radius:16px; padding:4px 14px; font-weight:600; font-size:12px; }"
+            "QPushButton#downloadBtn:hover { background-color:#222222; }"
             "QToolButton#aboutBtn { padding:3px 12px; }"
         );
     }

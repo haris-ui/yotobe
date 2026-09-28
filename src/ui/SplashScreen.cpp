@@ -15,20 +15,20 @@ SplashScreen::SplashScreen(QWidget* parent)
 {
     setAttribute(Qt::WA_StyledBackground, true);
 
-    auto mainLayout = new QVBoxLayout(this);
+    auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setAlignment(Qt::AlignCenter);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Central Card Widget
+    // Central Card Widget — Framer surface-1 (#141414) on pure canvas (#090909)
     m_cardWidget = new QWidget(this);
-    m_cardWidget->setFixedSize(460, 360);
+    m_cardWidget->setFixedSize(460, 370);
     m_cardWidget->setStyleSheet(
-        "background-color: #161616;"
-        "border-radius: 18px;"
-        "border: 1px solid #282828;"
+        "background-color: #141414;"
+        "border-radius: 22px;"
+        "border: 1px solid #262626;"
     );
 
-    auto cardLayout = new QVBoxLayout(m_cardWidget);
+    auto* cardLayout = new QVBoxLayout(m_cardWidget);
     cardLayout->setContentsMargins(36, 36, 36, 32);
     cardLayout->setSpacing(12);
 
@@ -39,14 +39,14 @@ SplashScreen::SplashScreen(QWidget* parent)
 
     QPixmap rawLogo(":/icons/app_icon.png");
     if (!rawLogo.isNull()) {
-        QPixmap scaledLogo = rawLogo.scaled(104, 104, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QPixmap scaledLogo = rawLogo.scaled(96, 96, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-        QPixmap roundedLogo(104, 104);
+        QPixmap roundedLogo(96, 96);
         roundedLogo.fill(Qt::transparent);
         QPainter painter(&roundedLogo);
         painter.setRenderHint(QPainter::Antialiasing);
         QPainterPath path;
-        path.addRoundedRect(0, 0, 104, 104, 22, 22);
+        path.addRoundedRect(0, 0, 96, 96, 20, 20);
         painter.setClipPath(path);
         painter.drawPixmap(0, 0, scaledLogo);
         painter.end();
@@ -55,41 +55,47 @@ SplashScreen::SplashScreen(QWidget* parent)
     }
     cardLayout->addWidget(m_logoLabel);
 
-    // 2. Title "Yotobe."
+    // 2. Title "Yotobe" — Framer display-md typography
     m_titleLabel = new QLabel(m_cardWidget);
-    m_titleLabel->setText("<span style='color: #ffffff; font-weight: 800; font-size: 30px; letter-spacing: -0.5px;'>Yotobe</span><span style='color: #ff0000; font-size: 30px; font-weight: 800;'>.</span>");
+    m_titleLabel->setText(
+        "<span style='color: #ffffff; font-weight: 700; font-size: 28px; letter-spacing: -1.0px;'>Yotobe</span>");
     m_titleLabel->setAlignment(Qt::AlignCenter);
     m_titleLabel->setStyleSheet("border: none; background: transparent;");
     cardLayout->addWidget(m_titleLabel);
 
-    // 3. Subtitle
-    m_subtitleLabel = new QLabel("Dedicated YouTube Desktop Application", m_cardWidget);
-    m_subtitleLabel->setStyleSheet("color: #888888; font-size: 13px; font-weight: 500; border: none; background: transparent;");
+    // 3. Subtitle — Framer body-sm typography in ink-muted
+    m_subtitleLabel = new QLabel(
+        "<span style='color: #888888; font-size: 13px; font-weight: 400; letter-spacing: -0.15px;'>Minimalist Desktop Client for YouTube</span>",
+        m_cardWidget);
     m_subtitleLabel->setAlignment(Qt::AlignCenter);
+    m_subtitleLabel->setStyleSheet("border: none; background: transparent;");
     cardLayout->addWidget(m_subtitleLabel);
 
-    // 4. Author Credits
-    m_authorLabel = new QLabel("Made by Muhammad Haris Zubair", m_cardWidget);
-    m_authorLabel->setStyleSheet("color: #e2b714; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; padding: 2px; border: none; background: transparent;");
+    // 4. Author Badge — Framer pill chip
+    m_authorLabel = new QLabel(
+        "<span style='background-color: #1c1c1c; color: #888888; border: 1px solid #282828; border-radius: 100px; padding: 4px 14px; font-size: 11px; font-weight: 500;'>"
+        "Engineered by <strong style='color: #ffffff; font-weight: 600;'>Muhammad Haris Zubair</strong></span>",
+        m_cardWidget);
     m_authorLabel->setAlignment(Qt::AlignCenter);
+    m_authorLabel->setStyleSheet("border: none; background: transparent; margin-top: 4px;");
     cardLayout->addWidget(m_authorLabel);
 
     cardLayout->addStretch();
 
-    // 5. Glowing Indeterminate Progress Bar
+    // 5. Hairline Progress Bar — Framer accent violet/blue gradient
     m_progressBar = new QProgressBar(m_cardWidget);
-    m_progressBar->setFixedHeight(4);
+    m_progressBar->setFixedHeight(3);
     m_progressBar->setRange(0, 0); // Indeterminate animated sweep
     m_progressBar->setTextVisible(false);
     m_progressBar->setStyleSheet(
-        "QProgressBar { background-color: #242424; border-radius: 2px; border: none; }"
-        "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ff0000, stop:1 #e2b714); border-radius: 2px; }"
+        "QProgressBar { background-color: #1c1c1c; border-radius: 1.5px; border: none; }"
+        "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a4cf5, stop:0.5 #0099ff, stop:1 #6a4cf5); border-radius: 1.5px; }"
     );
     cardLayout->addWidget(m_progressBar);
 
     // 6. Status text
     m_statusLabel = new QLabel("Initializing environment...", m_cardWidget);
-    m_statusLabel->setStyleSheet("color: #606060; font-size: 11px; border: none; background: transparent;");
+    m_statusLabel->setStyleSheet("color: #555555; font-size: 11px; font-weight: 500; border: none; background: transparent;");
     m_statusLabel->setAlignment(Qt::AlignCenter);
     cardLayout->addWidget(m_statusLabel);
 
@@ -113,9 +119,6 @@ void SplashScreen::finishWithFade() {
     }
     m_isFadingOut = true;
 
-    // Parent nullptr: DeleteWhenStopped has sole ownership — avoids parent/child
-    // deletion order conflict when widget's deleteLater() and animation cleanup
-    // both fire in the same event-loop cycle.
     auto anim = new QPropertyAnimation(m_opacityEffect, "opacity", nullptr);
     anim->setDuration(350);
     anim->setStartValue(1.0);
@@ -130,5 +133,6 @@ void SplashScreen::finishWithFade() {
 
 void SplashScreen::paintEvent(QPaintEvent* /*event*/) {
     QPainter painter(this);
-    painter.fillRect(rect(), QColor(15, 15, 15));
+    // Framer canvas: #090909
+    painter.fillRect(rect(), QColor(9, 9, 9));
 }

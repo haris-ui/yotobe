@@ -17,6 +17,11 @@
 #include <QDesktopServices>
 #include <QFileInfo>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <dwmapi.h>
+#endif
+
 DownloadDialog::DownloadDialog(VideoDownloader* downloader,
                                const QUrl& currentVideoUrl,
                                SettingsManager* settings,
@@ -26,19 +31,99 @@ DownloadDialog::DownloadDialog(VideoDownloader* downloader,
     , m_settings(settings)
     , m_videoUrl(currentVideoUrl)
 {
-    setWindowTitle("Yotobe - Video Downloader");
+    setWindowTitle("Yotobe - Media Downloader");
     setWindowIcon(QIcon(":/icons/app_icon.png"));
-    setFixedSize(580, 520);
+    setFixedSize(620, 560);
+
+#ifdef Q_OS_WIN
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    BOOL useDarkMode = TRUE;
+    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &useDarkMode, sizeof(useDarkMode));
+    COLORREF captionColor = RGB(9, 9, 9);
+    DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, &captionColor, sizeof(captionColor));
+    COLORREF borderColor = RGB(38, 38, 38);
+    DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, &borderColor, sizeof(borderColor));
+#endif
+
     setStyleSheet(
-        "QDialog { background-color: #141414; color: #f1f1f1; font-family: 'Segoe UI', sans-serif; }"
-        "QLabel { color: #d0d0d0; font-size: 12px; font-weight: 500; }"
-        "QLineEdit { background-color: #1e1e1e; color: #ffffff; border: 1px solid #333333; border-radius: 6px; padding: 6px 10px; font-size: 12px; }"
-        "QLineEdit:focus { border-color: #3ea6ff; }"
-        "QComboBox { background-color: #1e1e1e; color: #ffffff; border: 1px solid #333333; border-radius: 6px; padding: 6px 10px; font-size: 12px; }"
-        "QComboBox::drop-down { border: none; }"
-        "QComboBox QAbstractItemView { background-color: #242424; color: #ffffff; selection-background-color: #383838; }"
-        "QListWidget { background-color: #1a1a1a; color: #e0e0e0; border: 1px solid #2e2e2e; border-radius: 6px; padding: 4px; font-size: 12px; }"
-        "QListWidget::item { padding: 4px 6px; border-bottom: 1px solid #222; }"
+        "QDialog {"
+        "  background-color: #090909;"
+        "  color: #ffffff;"
+        "  font-family: 'GT Walsheim', 'Segoe UI Variable Text', 'Segoe UI', -apple-system, sans-serif;"
+        "}"
+        "QLabel {"
+        "  color: #999999;"
+        "  font-size: 13px;"
+        "}"
+        "QLineEdit {"
+        "  background-color: #141414;"
+        "  color: #ffffff;"
+        "  border: 1px solid #262626;"
+        "  border-radius: 10px;"
+        "  padding: 8px 12px;"
+        "  font-size: 13px;"
+        "}"
+        "QLineEdit:focus {"
+        "  border: 1px solid #0099ff;"
+        "}"
+        "QComboBox {"
+        "  background-color: #141414;"
+        "  color: #ffffff;"
+        "  border: 1px solid #262626;"
+        "  border-radius: 10px;"
+        "  padding: 8px 12px;"
+        "  font-size: 13px;"
+        "}"
+        "QComboBox:focus {"
+        "  border: 1px solid #0099ff;"
+        "}"
+        "QComboBox::drop-down {"
+        "  border: none;"
+        "  width: 24px;"
+        "}"
+        "QComboBox::down-arrow {"
+        "  image: url(:/icons/chevron_down.svg);"
+        "  width: 10px;"
+        "  height: 10px;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "  background-color: #1c1c1c;"
+        "  color: #ffffff;"
+        "  selection-background-color: #262626;"
+        "  selection-color: #ffffff;"
+        "  border: 1px solid #262626;"
+        "  border-radius: 8px;"
+        "  padding: 4px;"
+        "}"
+        "QListWidget {"
+        "  background-color: #0c0c0c;"
+        "  color: #cccccc;"
+        "  border: 1px solid #222222;"
+        "  border-radius: 12px;"
+        "  padding: 6px;"
+        "  font-size: 12px;"
+        "}"
+        "QListWidget::item {"
+        "  padding: 5px 8px;"
+        "  border-bottom: 1px solid #161616;"
+        "}"
+        "QScrollBar:vertical {"
+        "  background: #0c0c0c;"
+        "  width: 6px;"
+        "  margin: 0;"
+        "  border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "  background: #262626;"
+        "  min-height: 20px;"
+        "  border-radius: 3px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "  background: #383838;"
+        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+        "  height: 0;"
+        "}"
     );
 
     setupUi();
@@ -58,37 +143,61 @@ bool DownloadDialog::isDirectVideoUrl(const QString& urlStr) const {
 
 void DownloadDialog::setupUi() {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(20, 18, 20, 16);
-    mainLayout->setSpacing(12);
+    mainLayout->setContentsMargins(24, 22, 24, 20);
+    mainLayout->setSpacing(14);
 
-    // Title header
+    const QString secondaryBtnStyle =
+        "QPushButton {"
+        "  background-color: #1c1c1c;"
+        "  color: #ffffff;"
+        "  font-weight: 500;"
+        "  font-size: 12px;"
+        "  border: 1px solid #262626;"
+        "  border-radius: 100px;"
+        "  padding: 0 16px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #242424;"
+        "  border-color: #333333;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #181818;"
+        "}";
+
+    // ─────────────────────────────────────────────────────────────
+    // Title Header & Backend Status
+    // ─────────────────────────────────────────────────────────────
+    auto* headerLayout = new QHBoxLayout();
     auto* titleHeader = new QLabel(
-        "<span style='font-size:16px;font-weight:700;color:#ffffff;'>Download YouTube Media</span>",
+        "<span style='font-size:18px;font-weight:600;color:#ffffff;letter-spacing:-0.4px;'>Download Media</span>",
         this);
-    mainLayout->addWidget(titleHeader);
+    headerLayout->addWidget(titleHeader);
+    headerLayout->addStretch();
 
-    // Backend status badge
     bool hasYtDlp = VideoDownloader::isBackendAvailable();
     bool hasFfmpeg = VideoDownloader::isFfmpegAvailable();
-    QString statusBadge = QString(
-        "<span style='color:%1;font-size:11px;font-weight:600;'>yt-dlp: %2</span> &nbsp;|&nbsp; "
-        "<span style='color:%3;font-size:11px;font-weight:600;'>ffmpeg: %4</span>")
-        .arg(hasYtDlp ? "#4ade80" : "#ff4444",
-             hasYtDlp ? "Ready" : "Missing",
-             hasFfmpeg ? "#4ade80" : "#eab308",
-             hasFfmpeg ? "Ready (MP4/MP3 Merging Enabled)" : "Not Detected (Direct Streams Only)");
 
-    m_backendInfoLabel = new QLabel(statusBadge, this);
-    mainLayout->addWidget(m_backendInfoLabel);
+    QString ytdlpBadge = hasYtDlp
+        ? "<span style='background-color:#0f2015;color:#22c55e;border:1px solid #193d25;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;'>yt-dlp: Ready</span>"
+        : "<span style='background-color:#291010;color:#ef4444;border:1px solid #4a1c1c;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;'>yt-dlp: Missing</span>";
 
-    // URL row
-    auto* urlHeaderLayout = new QHBoxLayout();
-    urlHeaderLayout->addWidget(new QLabel("Video URL:", this));
-    urlHeaderLayout->addStretch();
-    mainLayout->addLayout(urlHeaderLayout);
+    QString ffmpegBadge = hasFfmpeg
+        ? "<span style='background-color:#0f2015;color:#22c55e;border:1px solid #193d25;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;'>ffmpeg: Ready</span>"
+        : "<span style='background-color:#261c0c;color:#f59e0b;border:1px solid #3d2d14;border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;'>ffmpeg: Not Detected</span>";
+
+    m_backendInfoLabel = new QLabel(QString("%1 &nbsp; %2").arg(ytdlpBadge, ffmpegBadge), this);
+    headerLayout->addWidget(m_backendInfoLabel);
+    mainLayout->addLayout(headerLayout);
+
+    // ─────────────────────────────────────────────────────────────
+    // Video URL input
+    // ─────────────────────────────────────────────────────────────
+    auto* urlLabel = new QLabel("VIDEO URL", this);
+    urlLabel->setStyleSheet("color: #666666; font-size: 11px; font-weight: 600; letter-spacing: 0.8px;");
+    mainLayout->addWidget(urlLabel);
 
     auto* urlInputLayout = new QHBoxLayout();
-    urlInputLayout->setSpacing(6);
+    urlInputLayout->setSpacing(8);
 
     QString initialUrl = m_videoUrl.toString();
     if (!isDirectVideoUrl(initialUrl)) {
@@ -100,16 +209,19 @@ void DownloadDialog::setupUi() {
     urlInputLayout->addWidget(m_urlEdit, 1);
 
     m_pasteBtn = new QPushButton("Paste", this);
-    m_pasteBtn->setFixedHeight(32);
-    m_pasteBtn->setStyleSheet("background-color: #272727; color: #f1f1f1; border: 1px solid #3a3a3a; border-radius: 6px; padding: 4px 12px; font-weight: 600;");
+    m_pasteBtn->setFixedHeight(36);
+    m_pasteBtn->setStyleSheet(secondaryBtnStyle);
     connect(m_pasteBtn, &QPushButton::clicked, this, &DownloadDialog::pasteUrlClicked);
     urlInputLayout->addWidget(m_pasteBtn);
     mainLayout->addLayout(urlInputLayout);
 
-    // Format selection
-    auto* formatLayout = new QHBoxLayout();
-    formatLayout->setSpacing(10);
-    formatLayout->addWidget(new QLabel("Quality / Format:", this));
+    // ─────────────────────────────────────────────────────────────
+    // Format Selection
+    // ─────────────────────────────────────────────────────────────
+    auto* formatLabel = new QLabel("FORMAT & RESOLUTION", this);
+    formatLabel->setStyleSheet("color: #666666; font-size: 11px; font-weight: 600; letter-spacing: 0.8px;");
+    mainLayout->addWidget(formatLabel);
+
     m_formatCombo = new QComboBox(this);
     m_formatCombo->addItem("Best Quality Available (MP4)", static_cast<int>(DownloadFormat::BestVideoAudio));
     m_formatCombo->addItem("1080p Full HD (MP4)",         static_cast<int>(DownloadFormat::Video1080p));
@@ -117,13 +229,18 @@ void DownloadDialog::setupUi() {
     m_formatCombo->addItem("480p SD (Fast Download)",     static_cast<int>(DownloadFormat::Video480p));
     m_formatCombo->addItem("Audio Only (MP3)",           static_cast<int>(DownloadFormat::AudioOnlyMP3));
     m_formatCombo->addItem("Audio Only (M4A High Quality)", static_cast<int>(DownloadFormat::AudioOnlyM4A));
-    formatLayout->addWidget(m_formatCombo, 1);
-    mainLayout->addLayout(formatLayout);
+    mainLayout->addWidget(m_formatCombo);
 
-    // Save location — prefer user's configured path, fall back to Movies folder
+    // ─────────────────────────────────────────────────────────────
+    // Save Location
+    // ─────────────────────────────────────────────────────────────
+    auto* destLabel = new QLabel("SAVE DESTINATION", this);
+    destLabel->setStyleSheet("color: #666666; font-size: 11px; font-weight: 600; letter-spacing: 0.8px;");
+    mainLayout->addWidget(destLabel);
+
     auto* destLayout = new QHBoxLayout();
-    destLayout->setSpacing(6);
-    destLayout->addWidget(new QLabel("Save To:", this));
+    destLayout->setSpacing(8);
+
     QString defaultPath = m_settings
         ? m_settings->defaultDownloadPath()
         : QStandardPaths::writableLocation(QStandardPaths::MoviesLocation);
@@ -131,72 +248,151 @@ void DownloadDialog::setupUi() {
     destLayout->addWidget(m_destinationEdit, 1);
 
     auto* browseBtn = new QPushButton("Browse...", this);
-    browseBtn->setFixedHeight(32);
-    browseBtn->setStyleSheet("background-color: #272727; color: #f1f1f1; border: 1px solid #3a3a3a; border-radius: 6px; padding: 4px 12px; font-weight: 600;");
+    browseBtn->setFixedHeight(36);
+    browseBtn->setStyleSheet(secondaryBtnStyle);
     connect(browseBtn, &QPushButton::clicked, this, &DownloadDialog::browseDestination);
     destLayout->addWidget(browseBtn);
     mainLayout->addLayout(destLayout);
 
-    // Progress bar
+    // ─────────────────────────────────────────────────────────────
+    // Progress Bar & Status
+    // ─────────────────────────────────────────────────────────────
     m_progressBar = new QProgressBar(this);
-    m_progressBar->setFixedHeight(6);
+    m_progressBar->setFixedHeight(4);
     m_progressBar->setRange(0, 100);
     m_progressBar->setValue(0);
     m_progressBar->setTextVisible(false);
     m_progressBar->setStyleSheet(
-        "QProgressBar { border: none; background-color: #222222; border-radius: 3px; }"
-        "QProgressBar::chunk { background-color: #cc0000; border-radius: 3px; }");
+        "QProgressBar {"
+        "  border: none;"
+        "  background-color: #1c1c1c;"
+        "  border-radius: 2px;"
+        "}"
+        "QProgressBar::chunk {"
+        "  background-color: #0099ff;"
+        "  border-radius: 2px;"
+        "}");
     mainLayout->addWidget(m_progressBar);
 
-    // Status label
     m_statusLabel = new QLabel("Ready to download", this);
-    m_statusLabel->setStyleSheet("color: #aaaaaa; font-size: 11px;");
+    m_statusLabel->setStyleSheet("color: #888888; font-size: 12px; font-weight: 500;");
     mainLayout->addWidget(m_statusLabel);
 
-    // Action buttons (Start, Cancel, Open Folder)
+    // ─────────────────────────────────────────────────────────────
+    // Action Buttons Row (Start Download, Cancel, Open Folder)
+    // ─────────────────────────────────────────────────────────────
     auto* actionLayout = new QHBoxLayout();
-    actionLayout->setSpacing(8);
+    actionLayout->setSpacing(10);
 
+    // Signature Framer primary white pill button
     m_downloadBtn = new QPushButton("Start Download", this);
-    m_downloadBtn->setFixedHeight(34);
+    m_downloadBtn->setFixedHeight(36);
     m_downloadBtn->setStyleSheet(
-        "QPushButton { background-color: #cc0000; color: #ffffff; font-weight: 700; border: none; border-radius: 6px; padding: 6px 18px; }"
-        "QPushButton:hover { background-color: #e60000; }"
-        "QPushButton:disabled { background-color: #3a1515; color: #666; }");
+        "QPushButton {"
+        "  background-color: #ffffff;"
+        "  color: #000000;"
+        "  font-weight: 600;"
+        "  font-size: 13px;"
+        "  border-radius: 100px;"
+        "  padding: 0 24px;"
+        "  border: none;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #e5e5e5;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #cccccc;"
+        "}"
+        "QPushButton:disabled {"
+        "  background-color: #262626;"
+        "  color: #666666;"
+        "}");
     connect(m_downloadBtn, &QPushButton::clicked, this, &DownloadDialog::startDownloadClicked);
     actionLayout->addWidget(m_downloadBtn);
 
     m_cancelBtn = new QPushButton("Cancel", this);
-    m_cancelBtn->setFixedHeight(34);
+    m_cancelBtn->setFixedHeight(36);
     m_cancelBtn->setEnabled(false);
     m_cancelBtn->setStyleSheet(
-        "QPushButton { background-color: #272727; color: #f1f1f1; border: 1px solid #383838; border-radius: 6px; padding: 6px 14px; font-weight: 600; }"
-        "QPushButton:hover { background-color: #333333; }"
-        "QPushButton:disabled { background-color: #1a1a1a; color: #444; border-color: #242424; }");
+        "QPushButton {"
+        "  background-color: #1c1c1c;"
+        "  color: #ffffff;"
+        "  font-weight: 500;"
+        "  font-size: 13px;"
+        "  border: 1px solid #262626;"
+        "  border-radius: 100px;"
+        "  padding: 0 20px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #242424;"
+        "  border-color: #333333;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #181818;"
+        "}"
+        "QPushButton:disabled {"
+        "  background-color: #141414;"
+        "  color: #444444;"
+        "  border-color: #1a1a1a;"
+        "}");
     connect(m_cancelBtn, &QPushButton::clicked, this, &DownloadDialog::cancelDownloadClicked);
     actionLayout->addWidget(m_cancelBtn);
 
-    m_openFolderBtn = new QPushButton("Open Download Folder", this);
-    m_openFolderBtn->setFixedHeight(34);
+    m_openFolderBtn = new QPushButton("Open Folder", this);
+    m_openFolderBtn->setFixedHeight(36);
     m_openFolderBtn->setStyleSheet(
-        "QPushButton { background-color: #1a2733; color: #3ea6ff; border: 1px solid #23425e; border-radius: 6px; padding: 6px 14px; font-weight: 600; }"
-        "QPushButton:hover { background-color: #213547; border-color: #33618a; }");
+        "QPushButton {"
+        "  background-color: #0d2238;"
+        "  color: #0099ff;"
+        "  font-weight: 500;"
+        "  font-size: 13px;"
+        "  border: 1px solid #1a3c61;"
+        "  border-radius: 100px;"
+        "  padding: 0 18px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #13304f;"
+        "  border-color: #245285;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #0b1a2b;"
+        "}");
     connect(m_openFolderBtn, &QPushButton::clicked, this, &DownloadDialog::openFolderClicked);
     actionLayout->addWidget(m_openFolderBtn);
 
+    actionLayout->addStretch();
     mainLayout->addLayout(actionLayout);
 
-    // Download history
-    mainLayout->addWidget(new QLabel("Download History:", this));
+    // ─────────────────────────────────────────────────────────────
+    // Download History List
+    // ─────────────────────────────────────────────────────────────
+    auto* historyLabel = new QLabel("RECENT DOWNLOADS", this);
+    historyLabel->setStyleSheet("color: #666666; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; margin-top: 2px;");
+    mainLayout->addWidget(historyLabel);
+
     m_historyList = new QListWidget(this);
-    m_historyList->setFixedHeight(110);
+    m_historyList->setFixedHeight(105);
     mainLayout->addWidget(m_historyList);
 
-    // Footer Author credit
-    auto* authorLabel = new QLabel("Made by Muhammad Haris Zubair", this);
-    authorLabel->setStyleSheet("color: #e2b714; font-size: 11px; font-weight: 600;");
-    authorLabel->setAlignment(Qt::AlignRight);
-    mainLayout->addWidget(authorLabel);
+    // ─────────────────────────────────────────────────────────────
+    // Footer Credit
+    // ─────────────────────────────────────────────────────────────
+    auto* footerLayout = new QHBoxLayout();
+    footerLayout->setContentsMargins(4, 4, 4, 0);
+
+    auto* authorBadge = new QLabel(
+        "<span style='color: #777777;'>Made by</span> <span style='color: #ffffff; font-weight: 600;'>Muhammad Haris Zubair</span>",
+        this);
+    authorBadge->setStyleSheet(
+        "background-color: #141414;"
+        "border: 1px solid #262626;"
+        "border-radius: 100px;"
+        "padding: 4px 12px;"
+        "font-size: 11px;");
+    footerLayout->addWidget(authorBadge);
+
+    footerLayout->addStretch();
+    mainLayout->addLayout(footerLayout);
 }
 
 void DownloadDialog::pasteUrlClicked() {
