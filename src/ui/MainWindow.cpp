@@ -680,6 +680,11 @@ void MainWindow::handleNavigationChanged(const QUrl& url, const QString& title)
         m_backBtn->setEnabled(nav->canGoBack());
         m_forwardBtn->setEnabled(nav->canGoForward());
     }
+
+    // If navigation moved away from watch/video while in fullscreen, restore chrome
+    if (isFullScreen() && !url.toString().contains("watch?v=") && !url.toString().contains("/shorts/")) {
+        handleFullScreenToggled(false);
+    }
 }
 
 void MainWindow::handleLoadingProgress(int progress)

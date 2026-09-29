@@ -45,7 +45,9 @@
 @@||youtube.com/youtubei/v1/player
 @@||youtube.com/youtubei/v1/next
 @@||youtube.com/youtubei/v1/browse
+@@||youtube.com/youtubei/v1/guide
 @@||youtube.com/youtubei/v1/search
+@@||youtube.com/youtubei/v1/updated_metadata
 @@||accounts.google.com^
 @@||apis.google.com^
 @@||fonts.googleapis.com^

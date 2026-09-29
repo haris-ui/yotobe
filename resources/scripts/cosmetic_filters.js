@@ -1,5 +1,5 @@
 // Yotobe Cosmetic Filter & Consistency Script
-// Ensures clean YouTube ad suppression without broken grid slots, empty gaps, or layout flickering
+// Ensures clean YouTube ad suppression without breaking site layout, masthead, or sidebar
 (function() {
     'use strict';
 
@@ -10,17 +10,12 @@
     }
 
     const CSS_RULES = `
-        /* 1. Feed & Grid Ad Suppression without breaking grid alignment */
+        /* 1. Feed & Grid Ad Suppression without collapsing layout sections */
         ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
         ytd-rich-item-renderer:has(#ad-content),
         ytd-rich-item-renderer:has([id="ad-content"]),
-        ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
-        ytd-rich-section-renderer:has(ytd-brand-video-singleton-renderer),
-        ytd-rich-section-renderer:has(ytd-banner-promo-renderer),
-        ytd-rich-section-renderer:has(.ytd-in-feed-ad-layout-renderer),
         ytd-ad-slot-renderer,
         ytd-in-feed-ad-layout-renderer,
-        ytd-banner-promo-renderer,
         ytd-banner-promo-renderer-background,
         ytd-action-companion-ad-renderer,
         ytd-promoted-sparkles-web-renderer,
@@ -33,7 +28,28 @@
             padding: 0 !important;
         }
 
-        /* 2. Player ad overlays & annotations */
+        /* 2. Guarantee YouTube top navigation bar and sidebar are never collapsed or hidden */
+        ytd-app:not([fullscreen]) #masthead-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        ytd-app:not([fullscreen]) ytd-masthead {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        ytd-app:not([fullscreen]) #guide,
+        ytd-app:not([fullscreen]) #guide-wrapper,
+        ytd-app:not([fullscreen]) #guide-content,
+        ytd-app:not([fullscreen]) ytd-mini-guide-renderer {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* 3. Player ad overlays & annotations */
         .ytp-ad-overlay-container,
         .ytp-ad-message-container,
         .ytp-ad-action-interstitial-background-container,
@@ -46,7 +62,7 @@
             pointer-events: none !important;
         }
 
-        /* 3. Dismiss anti-adblock modals */
+        /* 4. Dismiss anti-adblock modals */
         tp-yt-paper-dialog:has(#feedback),
         ytd-enforcement-message-view-model,
         #error-screen:has(ytd-enforcement-message-view-model) {
@@ -60,18 +76,6 @@
         style.id = 'yotobe-cosmetic-styles';
         style.textContent = CSS_RULES;
         (document.head || document.documentElement).appendChild(style);
-    }
-
-    function collapseAdGridSlots() {
-        const adSlots = document.querySelectorAll(
-            'ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer, #masthead-ad'
-        );
-        for (let i = 0; i < adSlots.length; i++) {
-            const parent = adSlots[i].closest('ytd-rich-item-renderer, ytd-rich-section-renderer');
-            if (parent && parent.style.display !== 'none') {
-                parent.style.setProperty('display', 'none', 'important');
-            }
-        }
     }
 
     let skippingAd = false;
@@ -101,26 +105,10 @@
 
     // Apply styles immediately
     injectStyles();
-    collapseAdGridSlots();
 
-    // Debounced observer to prevent layout thrashing and stutter
-    let scheduled = false;
-    const observer = new MutationObserver(() => {
-        if (!scheduled) {
-            scheduled = true;
-            setTimeout(() => {
-                injectStyles();
-                collapseAdGridSlots();
-                autoSkipVideoAds();
-                scheduled = false;
-            }, 100);
-        }
-    });
-
-    observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-    });
-
-    setInterval(autoSkipVideoAds, 1000);
+    // Check once every 800ms for video ad skipping without heavy DOM mutation observer thrashing
+    setInterval(() => {
+        injectStyles();
+        autoSkipVideoAds();
+    }, 800);
 })();
