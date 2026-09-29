@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_sharedProfile->setPersistentStoragePath(appDataDir + "/profile");
     m_sharedProfile->setCachePath(appDataDir + "/profile/cache");
     m_sharedProfile->setHttpAcceptLanguage("en-US,en;q=0.9");
-    m_sharedProfile->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    m_sharedProfile->setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
     m_sharedProfile->setHttpCacheMaximumSize(50 * 1024 * 1024); // Hard cap: 50 MB HTTP cache
     m_sharedProfile->setUrlRequestInterceptor(m_filterManager->interceptor());
 

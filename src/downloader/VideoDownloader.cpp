@@ -145,6 +145,9 @@ void VideoDownloader::processNextInQueue() {
 
     QStringList args;
     args << "--newline" << "--no-playlist" << "--no-mtime" << "--no-warnings";
+    args << "--no-check-certificates";
+    args << "--extractor-args" << "youtube:player_client=web,default";
+    args << "--user-agent" << "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
     const bool hasFfmpeg = !m_ffmpegPath.isEmpty();
     if (hasFfmpeg) {
@@ -173,6 +176,14 @@ void VideoDownloader::handleProcessOutput() {
 
         if (line.startsWith("[download] Destination: ")) {
             m_currentItem->setTitle(QFileInfo(line.mid(24).trimmed()).fileName());
+        } else if (line.startsWith("[ExtractAudio] Destination: ")) {
+            m_currentItem->setTitle(QFileInfo(line.mid(28).trimmed()).fileName());
+        } else if (line.startsWith("[Merger] Merging formats into ")) {
+            static const QRegularExpression mergerRe(R"(\[Merger\]\s+Merging formats into\s+[\"'](.+?)[\"'])");
+            const auto m = mergerRe.match(line);
+            if (m.hasMatch()) {
+                m_currentItem->setTitle(QFileInfo(m.captured(1)).fileName());
+            }
         } else if (line.contains("has already been downloaded")) {
             static const QRegularExpression alreadyRe(
                 R"(\[download\]\s+(.+?)\s+has already been downloaded)");
@@ -225,12 +236,20 @@ void VideoDownloader::handleProcessError() {
     if (!m_currentProcess) return;
     const QString err = QString::fromUtf8(m_currentProcess->readAllStandardError()).trimmed();
     if (!err.isEmpty()) {
-        m_lastErrorOutput = err;
+        if (!m_lastErrorOutput.isEmpty()) {
+            m_lastErrorOutput.append('\n');
+        }
+        m_lastErrorOutput.append(err);
         qDebug() << "yt-dlp stderr:" << err;
     }
 }
 
 void VideoDownloader::handleProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+    if (m_currentProcess) {
+        handleProcessOutput();
+        handleProcessError();
+    }
+
     if (m_currentItem) {
         if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
             m_currentItem->setProgress(100);
@@ -240,12 +259,27 @@ void VideoDownloader::handleProcessFinished(int exitCode, QProcess::ExitStatus e
         } else {
             m_currentItem->setState(DownloadState::Failed);
             QString errMsg = QStringLiteral("Download failed.");
-            if (m_lastErrorOutput.contains("Private video")) {
+            if (m_lastErrorOutput.contains("Private video", Qt::CaseInsensitive)) {
                 errMsg = "This video is private.";
-            } else if (m_lastErrorOutput.contains("Sign in to confirm your age")) {
+            } else if (m_lastErrorOutput.contains("Sign in to confirm your age", Qt::CaseInsensitive)) {
                 errMsg = "This video is age-restricted.";
-            } else if (m_lastErrorOutput.contains("Video unavailable")) {
+            } else if (m_lastErrorOutput.contains("Sign in to confirm you're not a bot", Qt::CaseInsensitive)) {
+                errMsg = "YouTube anti-bot challenge encountered.";
+            } else if (m_lastErrorOutput.contains("Video unavailable", Qt::CaseInsensitive)) {
                 errMsg = "Video is unavailable.";
+            } else if (m_lastErrorOutput.contains("HTTP Error 403", Qt::CaseInsensitive)) {
+                errMsg = "YouTube blocked stream access (HTTP 403 Forbidden).";
+            } else if (!m_lastErrorOutput.isEmpty()) {
+                const QStringList errLines = m_lastErrorOutput.split('\n', Qt::SkipEmptyParts);
+                for (const QString& line : errLines) {
+                    if (line.contains("ERROR:", Qt::CaseInsensitive)) {
+                        errMsg = line.trimmed();
+                        break;
+                    }
+                }
+                if (errMsg == "Download failed." && exitCode != 0) {
+                    errMsg = QStringLiteral("Download failed (Error code %1)").arg(exitCode);
+                }
             } else if (exitCode != 0) {
                 errMsg = QStringLiteral("Download failed (Error code %1)").arg(exitCode);
             }

@@ -26,8 +26,8 @@ BrowserView::BrowserView(QWebEngineProfile* profile, QWidget* parent)
 }
 
 void BrowserView::applyCustomUserAgent() {
-    // Standard modern Chrome desktop User Agent matching Qt 6.8 Chromium 128 core
-    const QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+    // Standard modern Chrome desktop User Agent
+    const QString ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     if (page() && page()->profile()) {
         page()->profile()->setHttpUserAgent(ua);
     }

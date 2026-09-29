@@ -40,25 +40,25 @@ bool UrlPolicy::isYouTubeDomain(const QUrl& url) const {
 
 bool UrlPolicy::isAuthDomain(const QUrl& url) const {
     const QString host = url.host().toLower();
-    return host == "accounts.google.com" ||
-           host.endsWith(".accounts.google.com") ||
-           host == "myaccount.google.com" ||
-           host.endsWith(".myaccount.google.com") ||
-           host == "consent.google.com" ||
-           host.endsWith(".consent.google.com") ||
-           host == "accounts.youtube.com" ||
-           host.endsWith(".accounts.youtube.com") ||
-           host == "apis.google.com" ||
-           host.endsWith(".apis.google.com") ||
-           host == "googleapis.com" ||
-           host.endsWith(".googleapis.com") ||
-           host == "gstatic.com" ||
-           host.endsWith(".gstatic.com") ||
-           host == "google.com" ||
-           host.endsWith(".google.com") ||
-           host == "googleusercontent.com" ||
-           host.endsWith(".googleusercontent.com") ||
-           host == "play.google.com";
+    if (host == "google.com" || host.endsWith(".google.com") ||
+        host == "googleusercontent.com" || host.endsWith(".googleusercontent.com") ||
+        host == "gstatic.com" || host.endsWith(".gstatic.com") ||
+        host == "googleapis.com" || host.endsWith(".googleapis.com") ||
+        host == "recaptcha.net" || host.endsWith(".recaptcha.net") ||
+        host == "youtube.com" || host.endsWith(".youtube.com") ||
+        host == "youtube-nocookie.com" || host.endsWith(".youtube-nocookie.com") ||
+        host == "youtu.be" ||
+        host == "gds.google.com" ||
+        host == "passkeys.google.com" ||
+        host == "policies.google.com" ||
+        host == "support.google.com") {
+        return true;
+    }
+    // Regional Google domains (e.g. google.co.uk, google.ca, google.de, google.co.in)
+    if (host.startsWith("google.") || host.contains(".google.")) {
+        return true;
+    }
+    return false;
 }
 
 bool UrlPolicy::isAllowedNavigation(const QUrl& url) const {
@@ -68,6 +68,11 @@ bool UrlPolicy::isAllowedNavigation(const QUrl& url) const {
         return false;
     }
     if (scheme == "about") return true;
+
+    // Any YouTube domain or Google authentication domain is always allowed
+    if (isYouTubeDomain(url) || isAuthDomain(url)) {
+        return true;
+    }
 
     const QString host = url.host().toLower();
     for (const QString& allowed : m_allowedHosts) {

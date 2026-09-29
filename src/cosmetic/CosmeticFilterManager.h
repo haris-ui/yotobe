@@ -16,8 +16,10 @@ public:
 private:
     void injectScript();
     void removeScript();
+    void injectCompatibilityScript();
 
     QWebEngineProfile* m_profile{nullptr};
     bool m_enabled{true};
     static const QString SCRIPT_NAME;
+    static const QString STEALTH_SCRIPT_NAME;
 };
