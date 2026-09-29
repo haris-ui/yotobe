@@ -42,8 +42,17 @@ void UrlFilterInterceptor::interceptRequest(QWebEngineUrlRequestInfo& info) {
     const bool isAuthContext = s_policy.isAuthDomain(url) || s_policy.isAuthDomain(firstParty);
 
     if (isAuthContext) {
-        // Never block or mutate any request belonging to Google authentication.
-        // Leaving headers natural and untampered ensures standard browser compliance.
+        // Inject UA-CH (User-Agent Client Hints) headers on Google auth requests.
+        // Google's GlifWebSignIn verifies these server-side; Qt does not send them
+        // automatically, which causes the "browser not secure" rejection.
+        info.setHttpHeader("Sec-CH-UA",
+            "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
+        info.setHttpHeader("Sec-CH-UA-Mobile", "?0");
+        info.setHttpHeader("Sec-CH-UA-Platform", "\"Windows\"");
+        info.setHttpHeader("Sec-CH-UA-Platform-Version", "\"10.0.0\"");
+        info.setHttpHeader("Sec-CH-UA-Full-Version-List",
+            "\"Google Chrome\";v=\"131.0.6778.205\", \"Chromium\";v=\"131.0.6778.205\", \"Not_A Brand\";v=\"24.0.0.0\"");
+
         if (m_stats) m_stats->recordAllowed(url.toString());
         return;
     }

@@ -103,12 +103,24 @@
         }
     }
 
-    // Apply styles immediately
+    // Apply styles immediately on script load
     injectStyles();
 
-    // Check once every 800ms for video ad skipping without heavy DOM mutation observer thrashing
-    setInterval(() => {
+    // Re-apply after DOM is fully ready (handles race on first load)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectStyles, { once: true });
+    }
+
+    // YouTube SPA navigation: 'yt-navigate-finish' fires when YouTube navigates between pages.
+    // Use this instead of polling to avoid triggering paint recalculations every 800ms.
+    window.addEventListener('yt-navigate-finish', function() {
+        // Style element may have been removed by YouTube's Polymer router — re-inject.
+        const existing = document.getElementById('yotobe-cosmetic-styles');
+        if (existing) existing.remove(); // force re-insert so CSS re-applies to new DOM
         injectStyles();
-        autoSkipVideoAds();
-    }, 800);
+    });
+
+    // Poll only for ad-skipping (no style injection to prevent layout repaints)
+    setInterval(autoSkipVideoAds, 800);
 })();
+
