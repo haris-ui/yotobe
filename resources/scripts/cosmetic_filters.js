@@ -1,5 +1,5 @@
 // Yotobe Cosmetic Filter & Consistency Script
-// Ensures clean YouTube ad suppression without broken grid slots, empty gaps, or overlapping elements
+// Ensures clean YouTube ad suppression without broken grid slots, empty gaps, or layout flickering
 (function() {
     'use strict';
 
@@ -25,27 +25,7 @@
         ytd-action-companion-ad-renderer,
         ytd-promoted-sparkles-web-renderer,
         ytd-promoted-video-renderer,
-        ytd-display-ad-renderer {
-            display: none !important;
-        }
-
-        /* 2. Prevent Header & Chips Overlap */
-        #masthead-container {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 2020 !important;
-            background-color: #0f0f0f !important;
-        }
-
-        #chips-wrapper {
-            position: sticky !important;
-            top: 56px !important;
-            z-index: 2010 !important;
-            background-color: #0f0f0f !important;
-        }
-
+        ytd-display-ad-renderer,
         #masthead-ad {
             display: none !important;
             height: 0 !important;
@@ -53,7 +33,7 @@
             padding: 0 !important;
         }
 
-        /* 3. Player ad overlays & annotations */
+        /* 2. Player ad overlays & annotations */
         .ytp-ad-overlay-container,
         .ytp-ad-message-container,
         .ytp-ad-action-interstitial-background-container,
@@ -66,7 +46,7 @@
             pointer-events: none !important;
         }
 
-        /* 4. Dismiss anti-adblock modals */
+        /* 3. Dismiss anti-adblock modals */
         tp-yt-paper-dialog:has(#feedback),
         ytd-enforcement-message-view-model,
         #error-screen:has(ytd-enforcement-message-view-model) {
@@ -83,7 +63,6 @@
     }
 
     function collapseAdGridSlots() {
-        // Fallback for browsers / webviews: explicitly collapse the entire parent card
         const adSlots = document.querySelectorAll(
             'ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer, #masthead-ad'
         );
@@ -95,18 +74,26 @@
         }
     }
 
+    let skippingAd = false;
     function autoSkipVideoAds() {
-        const video = document.querySelector('video.html5-main-video');
         const adContainer = document.querySelector('.ad-showing, .ad-interrupting');
-        
-        if (adContainer && video && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
-            video.currentTime = video.duration;
+        if (!adContainer) {
+            skippingAd = false;
+            return;
+        }
+
+        const video = document.querySelector('video.html5-main-video');
+        if (video && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
+            if (!skippingAd && (video.duration - video.currentTime > 0.5)) {
+                skippingAd = true;
+                video.currentTime = video.duration;
+            }
         }
 
         const skipButtons = document.querySelectorAll('.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern');
         for (let i = 0; i < skipButtons.length; i++) {
             const btn = skipButtons[i];
-            if (btn && typeof btn.click === 'function') {
+            if (btn && typeof btn.click === 'function' && btn.offsetParent !== null) {
                 btn.click();
             }
         }
@@ -121,12 +108,12 @@
     const observer = new MutationObserver(() => {
         if (!scheduled) {
             scheduled = true;
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 injectStyles();
                 collapseAdGridSlots();
                 autoSkipVideoAds();
                 scheduled = false;
-            });
+            }, 100);
         }
     });
 

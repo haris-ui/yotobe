@@ -13,8 +13,6 @@ int main(int argc, char* argv[]) {
     // - Standard user environment (clean, unflagged browser instance)
     qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
             "--enable-gpu-rasterization "
-            "--enable-zero-copy "
-            "--ignore-gpu-blocklist "
             "--enable-smooth-scrolling "
             "--enable-accelerated-video-decode "
             "--num-raster-threads=4 "

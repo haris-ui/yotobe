@@ -52,6 +52,17 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowIcon(QIcon(":/icons/app_icon.png"));
     resize(1340, 860);
 
+#ifdef Q_OS_WIN
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    BOOL darkMode = TRUE;
+    DwmSetWindowAttribute(hwnd, 20, &darkMode, sizeof(darkMode));
+    DwmSetWindowAttribute(hwnd, 19, &darkMode, sizeof(darkMode));
+    COLORREF borderColor = RGB(38, 38, 38);
+    DwmSetWindowAttribute(hwnd, 34, &borderColor, sizeof(borderColor));
+    COLORREF captionColor = RGB(9, 9, 9);
+    DwmSetWindowAttribute(hwnd, 35, &captionColor, sizeof(captionColor));
+#endif
+
     // 1. Boot filter engine
     m_filterManager->initialize();
     m_filterManager->setFilteringEnabled(m_settingsManager->isFilteringEnabled());
@@ -535,6 +546,9 @@ void MainWindow::setupUi()
     m_loadingBar->setTextVisible(false);
     m_loadingBar->setRange(0, 100);
     m_loadingBar->setValue(0);
+    QSizePolicy loadingSp = m_loadingBar->sizePolicy();
+    loadingSp.setRetainSizeWhenHidden(true);
+    m_loadingBar->setSizePolicy(loadingSp);
     m_loadingBar->setStyleSheet(
         "QProgressBar { border:none; background:transparent; }"
         "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0099ff, stop:1 #6a4cf5); }");
@@ -676,6 +690,7 @@ void MainWindow::handleLoadingProgress(int progress)
 
 void MainWindow::handleFullScreenToggled(bool fullScreen)
 {
+    setUpdatesEnabled(false);
     if (fullScreen) {
         if (!isFullScreen()) {
             m_wasMaximizedBeforeFullscreen = isMaximized();
@@ -688,6 +703,7 @@ void MainWindow::handleFullScreenToggled(bool fullScreen)
         if (isFullScreen()) {
             m_tabBarContainer->show();
             m_topBar->show();
+            m_loadingBar->setVisible(m_loadingBar->value() > 0 && m_loadingBar->value() < 100);
             if (m_wasMaximizedBeforeFullscreen) {
                 showMaximized();
             } else {
@@ -695,6 +711,7 @@ void MainWindow::handleFullScreenToggled(bool fullScreen)
             }
         }
     }
+    setUpdatesEnabled(true);
 }
 
 void MainWindow::updateFilterPill()
