@@ -20,11 +20,15 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -115,10 +119,20 @@ public class MainActivity extends AppCompatActivity {
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
-        // Swipe Refresh
+        // Swipe Refresh with smart scroll & video drag protection
         swipeRefreshLayout.setColorSchemeResources(R.color.accent_blue);
         swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.bg_surface_elevated);
         swipeRefreshLayout.setOnRefreshListener(() -> webView.reload());
+
+        // CRITICAL FIX: Prevent SwipeRefreshLayout from stealing video drag-to-shrink/minimize gestures!
+        swipeRefreshLayout.setOnChildScrollUpCallback((parent, child) -> {
+            String currentUrl = webView.getUrl();
+            if (isWatchPage(currentUrl)) {
+                // When a video is playing, ALWAYS return true so SwipeRefreshLayout NEVER intercepts vertical drag gestures!
+                return true;
+            }
+            return webView.canScrollVertically(-1);
+        });
 
         // WebViewClient
         webView.setWebViewClient(new WebViewClient() {
@@ -151,14 +165,22 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                super.doUpdateVisitedHistory(view, url, isReload);
+                updateSwipeRefreshState(url);
+            }
+
+            @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
+                updateSwipeRefreshState(url);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 loadingProgressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
+                updateSwipeRefreshState(url);
 
                 // Inject cosmetic adblock & background playback script
                 if (!cosmeticScript.isEmpty()) {
@@ -226,6 +248,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnPip = findViewById(R.id.btnPip);
         ImageButton btnDesktop = findViewById(R.id.btnDesktop);
         ImageButton btnDownload = findViewById(R.id.btnDownload);
+        ImageButton btnAbout = findViewById(R.id.btnAbout);
 
         btnBack.setOnClickListener(v -> {
             if (webView.canGoBack()) {
@@ -249,6 +272,50 @@ public class MainActivity extends AppCompatActivity {
             String currentUrl = webView.getUrl();
             DownloadHelper.showDownloadDialog(this, currentUrl);
         });
+
+        if (btnAbout != null) {
+            btnAbout.setOnClickListener(v -> showAboutDialog());
+        }
+    }
+
+    private boolean isWatchPage(String url) {
+        return url != null && (url.contains("/watch") || url.contains("/shorts/") || url.contains("watch?v="));
+    }
+
+    private void updateSwipeRefreshState(String url) {
+        if (swipeRefreshLayout == null) return;
+        // On video watch/shorts pages, disable pull-to-refresh completely so user can
+        // smoothly drag down the video to shrink/minimize it without refreshing the page!
+        boolean isVideo = isWatchPage(url);
+        swipeRefreshLayout.setEnabled(!isVideo);
+    }
+
+    private void showAboutDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_about, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        View githubLink = dialogView.findViewById(R.id.aboutGithubLink);
+        if (githubLink != null) {
+            githubLink.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.github_url)));
+                    startActivity(intent);
+                } catch (Exception ignored) {}
+            });
+        }
+
+        View btnClose = dialogView.findViewById(R.id.aboutBtnClose);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     private void toggleDesktopMode() {

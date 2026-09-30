@@ -17,6 +17,15 @@
 
     // 2. Mobile & Desktop YouTube Ad Elimination Styles
     const MOBILE_CSS = `
+        /* Prevent browser overscroll pull-down refresh from breaking video drag gesture */
+        html, body {
+            overscroll-behavior-y: contain !important;
+        }
+
+        #player-container-id, ytm-player, .player-container, #player {
+            touch-action: pan-x pan-y !important;
+        }
+
         /* Feed, Search, and Mobile Ad Units */
         ytm-promoted-sparkles-web-renderer,
         ytm-promoted-video-renderer,
