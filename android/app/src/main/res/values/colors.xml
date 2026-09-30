@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_canvas">#090909</color>
+    <color name="bg_surface">#141414</color>
+    <color name="bg_surface_elevated">#1c1c1c</color>
+    <color name="bg_border">#262626</color>
+    <color name="text_primary">#F2F2F2</color>
+    <color name="text_muted">#888888</color>
+    <color name="accent_blue">#0099FF</color>
+    <color name="accent_red">#FF0033</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+</resources>

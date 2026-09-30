@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Yotobe</string>
+    <string name="action_back">Back</string>
+    <string name="action_forward">Forward</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_home">Home</string>
+    <string name="action_pip">Picture-in-Picture</string>
+    <string name="action_desktop">Desktop Mode</string>
+    <string name="action_download">Download</string>
+    <string name="download_title">Download Video / Audio</string>
+    <string name="download_prompt">Choose an option for the current video:</string>
+    <string name="download_copy_url">Copy Video URL</string>
+    <string name="download_open_external">Open in External Downloader</string>
+    <string name="download_web_tool">Download via Web Portal</string>
+    <string name="url_copied">Video URL copied to clipboard</string>
+    <string name="pip_not_supported">Picture-in-Picture is not supported on this device</string>
+    <string name="playback_channel_name">Background Playback</string>
+    <string name="playback_channel_desc">Active playback notifications for background audio</string>
+</resources>

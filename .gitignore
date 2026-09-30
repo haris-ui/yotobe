@@ -35,7 +35,15 @@ Makefile*
 *.msi
 *.zip
 *.7z
+*.apk
 aqtinstall.log
+
+# Android Build Outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
 
 # yt-dlp local binary (downloaded per-user)
 yt-dlp.exe

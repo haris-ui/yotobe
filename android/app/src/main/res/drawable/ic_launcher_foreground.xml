@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <!-- Rounded Rect Play Badge -->
+  <path
+      android:fillColor="#FF0033"
+      android:pathData="M78,38c-0.8,-3 -3.2,-5.4 -6.2,-6.2 -5.5,-1.8 -27.8,-1.8 -27.8,-1.8 0,0 -22.3,0 -27.8,1.8 -3,0.8 -5.4,3.2 -6.2,6.2 -1.8,5.5 -1.8,16 -1.8,16 0,0 0,10.5 1.8,16 0.8,3 3.2,5.4 6.2,6.2 5.5,1.8 27.8,1.8 27.8,1.8 0,0 22.3,0 27.8,-1.8 3,-0.8 5.4,-3.2 6.2,-6.2 1.8,-5.5 1.8,-16 1.8,-16 0,0 0,-10.5 -1.8,-16z"/>
+  <!-- Play Triangle in White -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M48,63l18,-9 -18,-9z"/>
+  <!-- Yotobe Blue Accent Dot -->
+  <path
+      android:fillColor="#0099FF"
+      android:pathData="M78,32 A4,4 0 1,1 78,31.99 Z"/>
+</vector>

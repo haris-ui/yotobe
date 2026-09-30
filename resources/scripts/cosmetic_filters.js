@@ -70,15 +70,35 @@
         }
     `;
 
+    let styleElement = null;
+    
     function injectStyles() {
-        if (document.getElementById('yotobe-cosmetic-styles')) return;
-        const style = document.createElement('style');
-        style.id = 'yotobe-cosmetic-styles';
-        style.textContent = CSS_RULES;
-        (document.head || document.documentElement).appendChild(style);
+        // Reuse existing style element if present - prevents flickering
+        if (styleElement && document.head.contains(styleElement)) {
+            return; // Already injected
+        }
+        
+        styleElement = document.getElementById('yotobe-cosmetic-styles');
+        if (styleElement) {
+            return; // Already exists
+        }
+        
+        styleElement = document.createElement('style');
+        styleElement.id = 'yotobe-cosmetic-styles';
+        styleElement.textContent = CSS_RULES;
+        (document.head || document.documentElement).appendChild(styleElement);
+    }
+
+    function removeStyles() {
+        if (styleElement && document.head.contains(styleElement)) {
+            styleElement.remove();
+            styleElement = null;
+        }
     }
 
     let skippingAd = false;
+    let adSkipInterval = null;
+    
     function autoSkipVideoAds() {
         const adContainer = document.querySelector('.ad-showing, .ad-interrupting');
         if (!adContainer) {
@@ -114,13 +134,22 @@
     // YouTube SPA navigation: 'yt-navigate-finish' fires when YouTube navigates between pages.
     // Use this instead of polling to avoid triggering paint recalculations every 800ms.
     window.addEventListener('yt-navigate-finish', function() {
-        // Style element may have been removed by YouTube's Polymer router — re-inject.
-        const existing = document.getElementById('yotobe-cosmetic-styles');
-        if (existing) existing.remove(); // force re-insert so CSS re-applies to new DOM
-        injectStyles();
+        // Style element persists across SPA navigation - no need to re-inject
+        // Just ensure it's still in the document
+        if (styleElement && !document.head.contains(styleElement)) {
+            injectStyles();
+        }
     });
 
     // Poll only for ad-skipping (no style injection to prevent layout repaints)
-    setInterval(autoSkipVideoAds, 800);
+    // Use a longer interval and clear it when not needed
+    adSkipInterval = setInterval(autoSkipVideoAds, 1500); // Reduced from 800ms to 1500ms
+    
+    // Cleanup on unload
+    window.addEventListener('beforeunload', function() {
+        if (adSkipInterval) {
+            clearInterval(adSkipInterval);
+        }
+    });
 })();
 

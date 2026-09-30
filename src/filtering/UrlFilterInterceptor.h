@@ -6,6 +6,7 @@
 
 class RuleMatcher;
 class FilterStatistics;
+class UrlPolicy;
 
 class UrlFilterInterceptor : public QWebEngineUrlRequestInterceptor {
     Q_OBJECT
@@ -22,5 +23,6 @@ public:
 private:
     std::shared_ptr<RuleMatcher> m_matcher;
     std::shared_ptr<FilterStatistics> m_stats;
+    std::unique_ptr<UrlPolicy> m_policy;  // Own policy instance for auth domain checks
     bool m_filteringEnabled{true};
 };
